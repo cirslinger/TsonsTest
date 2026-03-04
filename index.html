@@ -142,8 +142,10 @@
 </style>
 </head>
 <body onmouseover="this.ownerDocument.lastHoveredElement = event.target.closest('.removable');" onmouseleave="this.ownerDocument.lastHoveredElement = undefined;" onclick="
-this.ownerDocument.lastHoveredElement?.classList.toggle('crossed');
-this.ownerDocument.lastHoveredElement?.classList.toggle('print-display-none', this.ownerDocument.lastHoveredElement?.classList.contains('crossed'));
+if (!event.target.closest('#roster-section-scoring')) {
+  this.ownerDocument.lastHoveredElement?.classList.toggle('crossed');
+  this.ownerDocument.lastHoveredElement?.classList.toggle('print-display-none', this.ownerDocument.lastHoveredElement?.classList.contains('crossed'));
+}
 ">
 
 <script>
@@ -178,6 +180,110 @@ document.addEventListener('click', function(e) {
     document.getElementById('roster-units-menu').classList.remove('open');
   }
 });
+
+// Scoring - 10th Edition Mission Decks (Chapter Approved 2025-26)
+const PRIMARY_MISSIONS = ['Linchpin','Burden of Trust','Take and Hold','Terraform','Purge the Foe','Scorched Earth','Unexploded Ordnance','Hidden Supplies','The Ritual','Supply Drop'];
+const DEPLOYMENT = ['Tipping Point','Sweeping Engagement','Search and Destroy','Hammer and Anvil','Dawn of War','Crucible of Battle'];
+const SECONDARY_MISSIONS = ['Behind Enemy Lines','Storm Hostile Objective','Engage on All Fronts','Establish Locus','Cleanse','Assassination','No Prisoners','Cull the Horde','Bring It Down','Defend Stronghold','Marked for Death','Secure No Man\'s Land','Sabotage','Area Denial','Recover Assets','A Tempting Target','Extend Battle Lines','Overwhelming Force','Display of Might'];
+
+function randomDraw(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function randomizeMissions() {
+  tacticalUsedP1 = [];
+  tacticalUsedP2 = [];
+  updateTacticalUsedDisplay('p1');
+  updateTacticalUsedDisplay('p2');
+  document.getElementById('scoring-primary').value = randomDraw(PRIMARY_MISSIONS);
+  document.getElementById('scoring-deployment').value = randomDraw(DEPLOYMENT);
+  const tact1 = document.getElementById('scoring-tactical-1');
+  const tact2 = document.getElementById('scoring-tactical-2');
+  if (tact1 && tact2) {
+    const drawn = shuffle(SECONDARY_MISSIONS).slice(0, 2);
+    tact1.value = drawn[0];
+    tact2.value = drawn[1];
+  }
+  const p1t1 = document.getElementById('p1-tact-1');
+  const p1t2 = document.getElementById('p1-tact-2');
+  if (p1t1 && p1t2) {
+    const p1drawn = shuffle(SECONDARY_MISSIONS).slice(0, 2);
+    p1t1.value = p1drawn[0];
+    p1t2.value = p1drawn[1];
+  }
+  const p2t1 = document.getElementById('p2-tact-1');
+  const p2t2 = document.getElementById('p2-tact-2');
+  if (p2t1 && p2t2) {
+    const p2drawn = shuffle(SECONDARY_MISSIONS).slice(0, 2);
+    p2t1.value = p2drawn[0];
+    p2t2.value = p2drawn[1];
+  }
+}
+
+let tacticalUsedP1 = [];
+let tacticalUsedP2 = [];
+
+function getTacticalAvailable(player, forSlot) {
+  const used = player === 'p1' ? tacticalUsedP1 : tacticalUsedP2;
+  const otherSlot = forSlot === 1 ? 2 : 1;
+  const inHand = document.getElementById(player + '-tact-' + otherSlot)?.value || '';
+  return SECONDARY_MISSIONS.filter(m => !used.includes(m) && m !== inHand);
+}
+
+function drawNewTacticalCard(player, slot) {
+  const available = getTacticalAvailable(player, slot);
+  if (available.length === 0) return null;
+  const card = available[Math.floor(Math.random() * available.length)];
+  const sel = document.getElementById(player + '-tact-' + slot);
+  if (sel) sel.value = card;
+  return card;
+}
+
+function discardForCP(player, slot) {
+  const sel = document.getElementById(player + '-tact-' + slot);
+  const val = sel?.value;
+  if (!val) return;
+  const used = player === 'p1' ? tacticalUsedP1 : tacticalUsedP2;
+  used.push(val);
+  updateTacticalUsedDisplay(player);
+  const cpEl = document.getElementById('cp-counter');
+  if (cpEl) cpEl.textContent = Math.max(0, parseInt(cpEl.textContent || 0) + 1);
+  drawNewTacticalCard(player, slot);
+}
+
+function clearTacticalUsed(player) {
+  if (player === 'p1') tacticalUsedP1 = []; else tacticalUsedP2 = [];
+  updateTacticalUsedDisplay(player);
+}
+
+function updateTacticalUsedDisplay(player) {
+  const used = player === 'p1' ? tacticalUsedP1 : tacticalUsedP2;
+  const el = document.getElementById(player + '-tact-used');
+  if (el) el.textContent = used.length ? 'Used: ' + used.join(', ') : '';
+}
+
+function updateScoringTotals(player) {
+  let sum = 0;
+  for (let r = 1; r <= 5; r++) {
+    const p = parseInt(document.getElementById(player + '-r' + r + '-p')?.value || 0);
+    const s = parseInt(document.getElementById(player + '-r' + r + '-s')?.value || 0);
+    const c = parseInt(document.getElementById(player + '-r' + r + '-c')?.value || 0);
+    const roundTotal = p + s + c;
+    sum += roundTotal;
+    const totalEl = document.getElementById(player + '-r' + r + '-total');
+    if (totalEl) totalEl.textContent = roundTotal || '—';
+  }
+  const br = document.getElementById(player + '-br')?.checked;
+  const final = sum + (br ? 10 : 0);
+  const totalInput = document.getElementById(player + '-total');
+  if (totalInput) totalInput.value = final;
+}
 </script>
 
 <nav class="roster-nav">
@@ -188,13 +294,17 @@ document.addEventListener('click', function(e) {
       <a href="#" onclick="showUnit('unit-daemon-prince'); return false;">Daemon Prince of Tzeentch</a>
       <a href="#" onclick="showUnit('unit-scarab-occult'); return false;">Scarab Occult Terminators</a>
       <a href="#" onclick="showUnit('unit-rubric-marines'); return false;">Rubric Marines + Sorcerer</a>
-      <a href="#" onclick="showUnit('unit-tzaangor'); return false;">Tzaangor Enlightened</a>
+      <a href="#" onclick="showUnit('unit-tzaangor'); return false;">Tzaangor Enlightened + Shaman</a>
+      <a href="#" onclick="showUnit('unit-tzaangors'); return false;">Tzaangors</a>
       <a href="#" onclick="showUnit('unit-mutalith'); return false;">Mutalith Vortex Beast</a>
       <a href="#" onclick="showUnit('unit-sekhetar'); return false;">Sekhetar Robots</a>
+      <a href="#" onclick="showUnit('unit-rhino'); return false;">Thousand Sons Rhino</a>
+      <a href="#" onclick="showUnit('unit-forgefiend'); return false;">Forgefiend</a>
     </div>
   </div>
   <button class="roster-nav-btn" data-section="roster-section-rules" onclick="showRosterSection('roster-section-rules')">Rule References</button>
   <button class="roster-nav-btn" data-section="roster-section-stratagems" onclick="showRosterSection('roster-section-stratagems')">Stratagems</button>
+  <button class="roster-nav-btn" data-section="roster-section-scoring" onclick="showRosterSection('roster-section-scoring')">Scoring</button>
 </nav>
 
 <div class="roster-accordion-container">
@@ -2501,10 +2611,92 @@ Wound roll.</span>
                             <span style="white-space: nowrap">
                               
                               
+                                <span class="model-name">Tzaangor Enlightened</span>
+                              
                             </span>
                             <div style="font-size: 0.7em">
                               <div class="model-options"> • 1x Aviarch: Close combat weapon, Fatecaster greatbow
 • 2x Enlightened: Close combat weapon, Fatecaster greatbow</div>
+                            </div>
+                          </div>
+                        
+                      </div>
+                    </div>
+                  
+                    <div style="display: flex; gap: 6px; z-index: 1; position: relative">
+                      <!-- Model Stats -->
+                      
+                        
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">M</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  10"
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">T</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  4
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic sv-stat" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">SV</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  5+ / 5++
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">W</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  4
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">LD</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  7+
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">OC</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  2
+                                </div>
+                              </div>
+                            </div>
+                          
+                        
+                      
+
+                      <div class="model" style="display: flex; gap: 1.2rem">
+                        
+                          <!-- Model Name & Options -->
+                          <div class="flex flex-wrap items-center gap-2 model-name-options" style="margin-top: 16px; text-shadow: rgb(0, 0, 0) 0px 0px 5px; display: inline-block">
+                            <span style="white-space: nowrap">
+                              
+                              
+                                <span class="model-name">Tzaangor Shaman</span>
+                              
+                            </span>
+                            <div style="font-size: 0.7em">
+                              <div class="model-options"> Baleful Devolution, Force stave</div>
                             </div>
                           </div>
                         
@@ -2792,6 +2984,20 @@ Wound roll.</span>
                 
                   
                     
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Tzaangor Shaman</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Psyker</span>
+                    
+                    
+                  
+                
+                  
+                    
                       <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Mutant</span>
                     
                     
@@ -2882,6 +3088,426 @@ Wound roll.</span>
               
                 
               
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+            </div>
+
+            <!-- Faction Icon-->
+            <div style="                 position: absolute;                 left: -28px;                 bottom: -16px;                 width: 54px;                 height: 54px;                 transform: rotate(-45deg);                 border: 2px solid var(--primary-color);                 overflow: hidden;                 display: flex;                 align-items: center;                 justify-content: center;               ">
+              <div style="background: center center rgb(188, 188, 190); min-height: 75px; min-width: 76px; transform: rotate(45deg)"> </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+
+<div id="unit-tzaangors" class="avoid-page-break" style="margin-bottom: 52px" type="card" catalogue="Chaos - Thousand Sons">
+        
+        <div class="min-h-15rem" style="             padding: 24px 0px;             background: linear-gradient(90deg, rgb(20, 21, 25) 0%, rgb(48, 57, 62) 45%, rgb(73, 74, 79) 100%);             color: rgb(255, 255, 255);             position: relative;           ">
+          <div style="display: flex; gap: 5px">
+            <!-- Header Section -->
+            <div style="padding: 4px 16px; color: rgb(255, 255, 255); position: relative; margin-left: 1.3rem; flex: 1">
+              <!--  Title Background Graphic -->
+              <div style="position: absolute; left: 0px; top: 0px; width: 100%; display: flex">
+                <div style="background-color: var(--primary-color-transparent); height: 80px; min-width: 33%"> </div>
+                <div style="height: 79px; display: flex; flex-direction: column">
+                  <div style="background-color: var(--primary-color-transparent); height: 40px"></div>
+                  <svg height="40" width="100" viewBox="0 0 100 40" style="fill: var(--primary-color-transparent)">
+                    <path d="m0 0h100c-32 0-68 40-100 40z"></path>
+                  </svg>
+                </div>
+                <div style="flex: 10 1 0%; background-color: var(--primary-color-transparent); height: 40px"> </div>
+              </div>
+
+              <!--  Unit Name & Costs -->
+              <div style="                   font-family: ConduitITCStd;                   font-size: 2.5em;                   letter-spacing: 0.1px;                   line-height: 1;                   font-weight: 800;                   text-transform: uppercase;                   z-index: 1;                   position: relative;                   display: flex;                   justify-content: space-between;                   align-items: center;                   margin-bottom: 2px;                 ">
+                
+                
+                  <span>Tzaangors</span>
+                
+                
+                  <span style="text-transform: initial; font-size: 1.2rem">
+                    <span>70</span><span>pts</span>
+                  </span>
+                
+              </div>
+
+              <!-- Models -->
+              <div style="display: flex; flex-direction: column; gap: 6px; z-index: 1; position: relative">
+                
+                    <div style="display: flex; gap: 6px; z-index: 1; position: relative">
+                      <!-- Model Stats -->
+                      
+                        
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">M</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  6"
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">T</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  4
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic sv-stat" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">SV</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  6+ / 6++
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">W</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  1
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">LD</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  7+
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">OC</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  1
+                                </div>
+                              </div>
+                            </div>
+                          
+                        
+                      
+
+                      <div class="model" style="display: flex; gap: 1.2rem">
+                        
+                          <!-- Model Name & Options -->
+                          <div class="flex flex-wrap items-center gap-2 model-name-options" style="margin-top: 16px; text-shadow: rgb(0, 0, 0) 0px 0px 5px; display: inline-block">
+                            <span style="white-space: nowrap">
+                              
+                              
+                                <span class="model-name">Tzaangors</span>
+                              
+                            </span>
+                            <div style="font-size: 0.7em">
+                              <div class="model-options"> • 1x Twistbray: Autopistol, Chainsword
+• 7x Tzaangor: Autopistol, Chainsword
+• 1x Tzaangor w/ herd banner: Autopistol, Chainsword
+• 1x Tzaangor w/ brayhorn: Autopistol, Chainsword</div>
+                            </div>
+                          </div>
+                        
+                      </div>
+                    </div>
+                  
+              </div>
+            </div>
+
+            <!-- Unit Miniature Image -->
+            
+              
+            
+          </div>
+        </div>
+        
+        <div class="border-b-2 border-t-0 border-var(--primary-color) sm:border-l-2 sm:border-r-2" style="display: flex; background-color: rgb(223, 224, 226)">
+          <!-- Left Section -->
+          <div class="pt-5" style="width: 65%; border-right: 2px solid var(--primary-color); position: relative; padding-bottom: 40px; display: flex; flex-direction: column">
+            <!-- Data Profiles -->
+            
+              <table cellspacing="0" class="weapons-table" style="width: 100%">
+                <thead>
+                  
+                    <tr class="uppercase" style="background-color: var(--primary-color); color: rgb(255, 255, 255)">
+                      <th style="max-width: 32px; min-width: 32px; width: 0%">
+                        <div style="display: flex; width: 100%; justify-content: center">
+                          <img class="profile-icon" typename="Ranged Weapons" style="max-width: 20px" src="">
+                        </div>
+                      </th>
+                      <th style="text-align: left" class="row-header">
+                        <span>Ranged Weapons</span>
+                        
+                      </th>
+
+                      
+                        <th class="data-cell">Range</th>
+                      
+                        <th class="data-cell">A</th>
+                      
+                        <th class="data-cell">BS</th>
+                      
+                        <th class="data-cell">S</th>
+                      
+                        <th class="data-cell">AP</th>
+                      
+                        <th class="data-cell">D</th>
+                      
+                    </tr>
+                  
+                </thead>
+                <tbody>
+                  
+                    <tr>
+                      <td style="border-top: none; background-color: rgb(223, 224, 226)"></td>
+                      <td style="text-align: left">
+                        <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 0px 4px; line-height: 1.05">
+                          <span style="font-weight: bold">Autopistol (x10)</span>
+
+                          <!-- Inlined after name Characteristics -->
+                          
+                            
+                              <span if="$text" style="font-size: 0.8em; font-weight: 700; color: var(--primary-color); text-transform: uppercase; line-height: 1.5">
+                                [<span type="markdown">Pistol</span>]
+                              </span>
+                            
+                          
+                        </div>
+                      </td>
+                      
+                        <td class="align-middle" type="markdown">12"</td>
+                      
+                        <td class="align-middle" type="markdown">1</td>
+                      
+                        <td class="align-middle" type="markdown">4+</td>
+                      
+                        <td class="align-middle" type="markdown">3</td>
+                      
+                        <td class="align-middle" type="markdown">0</td>
+                      
+                        <td class="align-middle" type="markdown">1</td>
+                      
+                    </tr>
+
+                    <!-- Full row spanning characteristic such as notes -->
+                    
+                  
+                  
+                    <tr class="emptyRow">
+                      <td style="border-top: none"></td>
+                      <td colspan="7"></td>
+                    </tr>
+                  
+                </tbody>
+              </table>
+            
+              <table cellspacing="0" class="weapons-table" style="width: 100%">
+                <thead>
+                  
+                    <tr class="uppercase" style="background-color: var(--primary-color); color: rgb(255, 255, 255)">
+                      <th style="max-width: 32px; min-width: 32px; width: 0%">
+                        <div style="display: flex; width: 100%; justify-content: center">
+                          <img class="profile-icon" typename="Melee Weapons" style="max-width: 20px" src="">
+                        </div>
+                      </th>
+                      <th style="text-align: left" class="row-header">
+                        <span>Melee Weapons</span>
+                        
+                      </th>
+
+                      
+                        <th class="data-cell">Range</th>
+                      
+                        <th class="data-cell">A</th>
+                      
+                        <th class="data-cell">WS</th>
+                      
+                        <th class="data-cell">S</th>
+                      
+                        <th class="data-cell">AP</th>
+                      
+                        <th class="data-cell">D</th>
+                      
+                    </tr>
+                  
+                </thead>
+                <tbody>
+                  
+                    <tr>
+                      <td style="border-top: none; background-color: rgb(223, 224, 226)"></td>
+                      <td style="text-align: left">
+                        <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 0px 4px; line-height: 1.05">
+                          <span style="font-weight: bold">Chainsword (x10)</span>
+
+                          <!-- Inlined after name Characteristics -->
+                          
+                            
+                              <span if="$text" style="font-size: 0.8em; font-weight: 700; color: var(--primary-color); text-transform: uppercase; line-height: 1.5">
+                                [<span type="markdown">-</span>]
+                              </span>
+                            
+                          
+                        </div>
+                      </td>
+                      
+                        <td class="align-middle" type="markdown">Melee</td>
+                      
+                        <td class="align-middle" type="markdown">3</td>
+                      
+                        <td class="align-middle" type="markdown">4+</td>
+                      
+                        <td class="align-middle" type="markdown">4</td>
+                      
+                        <td class="align-middle" type="markdown">0</td>
+                      
+                        <td class="align-middle" type="markdown">1</td>
+                      
+                    </tr>
+
+                    <!-- Full row spanning characteristic such as notes -->
+                    
+                  
+                  
+                    <tr class="emptyRow">
+                      <td style="border-top: none"></td>
+                      <td colspan="7"></td>
+                    </tr>
+                  
+                </tbody>
+              </table>
+            
+
+            <!-- Remaining Misc profiles -->
+            
+
+            <!-- Keywords / Categories -->
+            <div style="                 position: absolute;                 right: -2px;                 bottom: -16px;                 padding: 0px 42px 0px 8px;                 display: flex;                 align-items: center;                 background-color: rgb(188, 188, 190);                 border: 2px solid var(--primary-color);                 width: calc(100% - 0.9rem);                 background-size: contain;                 min-height: 54px;                 gap: 3px;               ">
+              <span style="font-size: 1.1em">KEYWORDS:</span>
+              <div>
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Infantry</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Chaos</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Tzeentch</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Mutant</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Tzaangors</span>
+                    
+                    
+                  
+                
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Section -->
+          <div class="relative w-full flex-1 p-1 pb-50pxpt-5 print:p-20px sm:p-2 sm:pb-50px sm:pt-5 sm:print:p-20px sm:print:pb-50px md:p-20px md:pb-50px md:pt-5 md:print:p-20px md:print:pb-50px">
+            <div style="                 font-size: 1.1em;                 padding: 1px 6px;                 background-color: var(--primary-color);                 color: rgb(255, 255, 255);                 font-weight: 600;                 min-height: 27px;                 display: flex;                 align-items: center;               ">
+              ABILITIES
+            </div>
+
+            <!-- Rules -->
+            <div class="rules-block" style="padding: 5px 2px; gap: 3px; border-bottom: 1px dotted rgb(158, 159, 161); line-height: 1.3; display: flex; flex-wrap: wrap">
+              <span style="font-size: 0.8em">RULES: </span>
+              
+                <span class="split rule" style="white-space: nowrap; font-size: 0.8em; font-weight: 700">Scouts 6"</span>
+              
+            </div>
+
+            <!-- Ability Profiles -->
+            <div class="hide-if-empty" style="display: flex; flex-direction: column; gap: 8px; padding: 4px 2px; border-bottom: 1px dotted rgb(158, 159, 161)">
+              
+                <div class="removable" style="font-size: 0.8em; line-height: 1.4">
+                  <span class="rule-name" style="font-weight: 700">Ambushing Hunters</span>
+                  
+                    
+                      
+                      
+                        <span class="removable" type="markdown">At the end of your opponent's turn, if this unit is more than 6" horizontally away from all enemy units, you can remove this unit from the battlefield and place it into Strategic Reserves.</span>
+                      
+                    
+                  
+                </div>
+              
+                <div class="removable" style="font-size: 0.8em; line-height: 1.4">
+                  <span class="rule-name" style="font-weight: 700">Brayhorn</span>
+                  
+                    
+                      
+                      
+                        <span class="removable" type="markdown">You can re-roll Advance and Charge rolls made for the bearer's unit.</span>
+                      
+                    
+                  
+                </div>
+              
+                <div class="removable" style="font-size: 0.8em; line-height: 1.4">
+                  <span class="rule-name" style="font-weight: 700">Herd Banner</span>
+                  
+                    
+                      
+                      
+                        <span class="removable" type="markdown">While the bearer's unit is within range of one or more objective markers you control, improve the Leadership characteristic of models in the bearer's unit by 1.</span>
+                      
+                    
+                  
+                </div>
+              
+            </div>
+
+            <!-- Placeholder to prevent text being under keywords -->
+            <div style="margin-bottom: 50px"></div>
+
+            <!-- Faction Keywords/Categories -->
+            <div class="keywords">
+              <span style="font-size: 0.9em; line-height: 1.3">FACTION KEYWORDS:</span>
+              
+                
+                  
+                  <span class="split keyword" style="font-size: 0.9em; font-weight: 600; white-space: nowrap">Thousand Sons</span>
                 
               
                 
@@ -3884,6 +4510,905 @@ Wound roll.</span>
                       
                       
                         <span class="removable" type="markdown">Once per battle round, you can target this unit with the Fire Overwatch or Heroic Intervention Stratagem for 0CP.</span>
+                      
+                    
+                  
+                </div>
+              
+            </div>
+
+            <!-- Placeholder to prevent text being under keywords -->
+            <div style="margin-bottom: 50px"></div>
+
+            <!-- Faction Keywords/Categories -->
+            <div class="keywords">
+              <span style="font-size: 0.9em; line-height: 1.3">FACTION KEYWORDS:</span>
+              
+                
+                  
+                  <span class="split keyword" style="font-size: 0.9em; font-weight: 600; white-space: nowrap">Thousand Sons</span>
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+            </div>
+
+            <!-- Faction Icon-->
+            <div style="                 position: absolute;                 left: -28px;                 bottom: -16px;                 width: 54px;                 height: 54px;                 transform: rotate(-45deg);                 border: 2px solid var(--primary-color);                 overflow: hidden;                 display: flex;                 align-items: center;                 justify-content: center;               ">
+              <div style="background: center center rgb(188, 188, 190); min-height: 75px; min-width: 76px; transform: rotate(45deg)"> </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    
+
+<div id="unit-rhino" class="avoid-page-break" style="margin-bottom: 52px" type="card" catalogue="Chaos - Thousand Sons">
+        
+        <div class="min-h-15rem" style="             padding: 24px 0px;             background: linear-gradient(90deg, rgb(20, 21, 25) 0%, rgb(48, 57, 62) 45%, rgb(73, 74, 79) 100%);             color: rgb(255, 255, 255);             position: relative;           ">
+          <div style="display: flex; gap: 5px">
+            <!-- Header Section -->
+            <div style="padding: 4px 16px; color: rgb(255, 255, 255); position: relative; margin-left: 1.3rem; flex: 1">
+              <!--  Title Background Graphic -->
+              <div style="position: absolute; left: 0px; top: 0px; width: 100%; display: flex">
+                <div style="background-color: var(--primary-color-transparent); height: 80px; min-width: 33%"> </div>
+                <div style="height: 79px; display: flex; flex-direction: column">
+                  <div style="background-color: var(--primary-color-transparent); height: 40px"></div>
+                  <svg height="40" width="100" viewBox="0 0 100 40" style="fill: var(--primary-color-transparent)">
+                    <path d="m0 0h100c-32 0-68 40-100 40z"></path>
+                  </svg>
+                </div>
+                <div style="flex: 10 1 0%; background-color: var(--primary-color-transparent); height: 40px"> </div>
+              </div>
+
+              <!--  Unit Name & Costs -->
+              <div style="                   font-family: ConduitITCStd;                   font-size: 2.5em;                   letter-spacing: 0.1px;                   line-height: 1;                   font-weight: 800;                   text-transform: uppercase;                   z-index: 1;                   position: relative;                   display: flex;                   justify-content: space-between;                   align-items: center;                   margin-bottom: 2px;                 ">
+                
+                
+                  <span>Thousand Sons Rhino</span>
+                
+                
+                  <span style="text-transform: initial; font-size: 1.2rem">
+                    <span>90</span><span>pts</span>
+                  </span>
+                
+              </div>
+
+              <!-- Models -->
+              <div style="display: flex; flex-direction: column; gap: 6px; z-index: 1; position: relative">
+                
+                    <div style="display: flex; gap: 6px; z-index: 1; position: relative">
+                      <!-- Model Stats -->
+                      
+                        
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">M</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  12"
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">T</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  9
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic sv-stat" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">SV</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  3+
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">W</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  10
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">LD</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  6+
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">OC</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  2
+                                </div>
+                              </div>
+                            </div>
+                          
+                        
+                      
+
+                      <div class="model" style="display: flex; gap: 1.2rem">
+                        
+                          <!-- Model Name & Options -->
+                          <div class="flex flex-wrap items-center gap-2 model-name-options" style="margin-top: 16px; text-shadow: rgb(0, 0, 0) 0px 0px 5px; display: inline-block">
+                            <span style="white-space: nowrap">
+                              
+                              
+                                <span class="model-name">Chaos Rhino</span>
+                              
+                            </span>
+                            <div style="font-size: 0.7em">
+                              <div class="model-options"> Inferno combi-bolter, Armoured tracks. Can replace inferno combi-bolter with havoc launcher, or add inferno combi-weapon / additional inferno combi-bolter</div>
+                            </div>
+                          </div>
+                        
+                      </div>
+                    </div>
+                  
+              </div>
+            </div>
+
+            <!-- Unit Miniature Image -->
+            
+              
+            
+          </div>
+        </div>
+        
+        <div class="border-b-2 border-t-0 border-var(--primary-color) sm:border-l-2 sm:border-r-2" style="display: flex; background-color: rgb(223, 224, 226)">
+          <!-- Left Section -->
+          <div class="pt-5" style="width: 65%; border-right: 2px solid var(--primary-color); position: relative; padding-bottom: 40px; display: flex; flex-direction: column">
+            <!-- Data Profiles -->
+            
+              <table cellspacing="0" class="weapons-table" style="width: 100%">
+                <thead>
+                  
+                    <tr class="uppercase" style="background-color: var(--primary-color); color: rgb(255, 255, 255)">
+                      <th style="max-width: 32px; min-width: 32px; width: 0%">
+                        <div style="display: flex; width: 100%; justify-content: center">
+                          <img class="profile-icon" typename="Ranged Weapons" style="max-width: 20px" src="">
+                        </div>
+                      </th>
+                      <th style="text-align: left" class="row-header">
+                        <span>Ranged Weapons</span>
+                        
+                      </th>
+
+                      
+                        <th class="data-cell">Range</th>
+                      
+                        <th class="data-cell">A</th>
+                      
+                        <th class="data-cell">BS</th>
+                      
+                        <th class="data-cell">S</th>
+                      
+                        <th class="data-cell">AP</th>
+                      
+                        <th class="data-cell">D</th>
+                      
+                    </tr>
+                  
+                </thead>
+                <tbody>
+                  
+                    <tr>
+                      <td style="border-top: none; background-color: rgb(223, 224, 226)"></td>
+                      <td style="text-align: left">
+                        <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 0px 4px; line-height: 1.05">
+                          <span style="font-weight: bold">Havoc launcher</span>
+
+                          <!-- Inlined after name Characteristics -->
+                          
+                            
+                              <span if="$text" style="font-size: 0.8em; font-weight: 700; color: var(--primary-color); text-transform: uppercase; line-height: 1.5">
+                                [<span type="markdown">Blast</span>]
+                              </span>
+                            
+                          
+                        </div>
+                      </td>
+                      
+                        <td class="align-middle" type="markdown">48"</td>
+                      
+                        <td class="align-middle" type="markdown">D6</td>
+                      
+                        <td class="align-middle" type="markdown">3+</td>
+                      
+                        <td class="align-middle" type="markdown">5</td>
+                      
+                        <td class="align-middle" type="markdown">0</td>
+                      
+                        <td class="align-middle" type="markdown">1</td>
+                      
+                    </tr>
+
+                    <!-- Full row spanning characteristic such as notes -->
+                    
+                  
+                    <tr>
+                      <td style="border-top: none; background-color: rgb(223, 224, 226)"></td>
+                      <td style="text-align: left">
+                        <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 0px 4px; line-height: 1.05">
+                          <span style="font-weight: bold">Inferno combi-bolter</span>
+
+                          <!-- Inlined after name Characteristics -->
+                          
+                            
+                              <span if="$text" style="font-size: 0.8em; font-weight: 700; color: var(--primary-color); text-transform: uppercase; line-height: 1.5">
+                                [<span type="markdown">Rapid Fire 2</span>]
+                              </span>
+                            
+                          
+                        </div>
+                      </td>
+                      
+                        <td class="align-middle" type="markdown">24"</td>
+                      
+                        <td class="align-middle" type="markdown">2</td>
+                      
+                        <td class="align-middle" type="markdown">3+</td>
+                      
+                        <td class="align-middle" type="markdown">4</td>
+                      
+                        <td class="align-middle" type="markdown">-2</td>
+                      
+                        <td class="align-middle" type="markdown">1</td>
+                      
+                    </tr>
+
+                    <!-- Full row spanning characteristic such as notes -->
+                    
+                  
+                    <tr>
+                      <td style="border-top: none; background-color: rgb(223, 224, 226)"></td>
+                      <td style="text-align: left">
+                        <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 0px 4px; line-height: 1.05">
+                          <span style="font-weight: bold">Inferno combi-weapon</span>
+
+                          <!-- Inlined after name Characteristics -->
+                          
+                            
+                              <span if="$text" style="font-size: 0.8em; font-weight: 700; color: var(--primary-color); text-transform: uppercase; line-height: 1.5">
+                                [<span type="markdown">Anti-Infantry 4+, Devastating Wounds, Rapid Fire 1</span>]
+                              </span>
+                            
+                          
+                        </div>
+                      </td>
+                      
+                        <td class="align-middle" type="markdown">24"</td>
+                      
+                        <td class="align-middle" type="markdown">1</td>
+                      
+                        <td class="align-middle" type="markdown">4+</td>
+                      
+                        <td class="align-middle" type="markdown">4</td>
+                      
+                        <td class="align-middle" type="markdown">-2</td>
+                      
+                        <td class="align-middle" type="markdown">1</td>
+                      
+                    </tr>
+
+                    <!-- Full row spanning characteristic such as notes -->
+                    
+                  
+                  
+                    <tr class="emptyRow">
+                      <td style="border-top: none"></td>
+                      <td colspan="7"></td>
+                    </tr>
+                  
+                </tbody>
+              </table>
+            
+              <table cellspacing="0" class="weapons-table" style="width: 100%">
+                <thead>
+                  
+                    <tr class="uppercase" style="background-color: var(--primary-color); color: rgb(255, 255, 255)">
+                      <th style="max-width: 32px; min-width: 32px; width: 0%">
+                        <div style="display: flex; width: 100%; justify-content: center">
+                          <img class="profile-icon" typename="Melee Weapons" style="max-width: 20px" src="">
+                        </div>
+                      </th>
+                      <th style="text-align: left" class="row-header">
+                        <span>Melee Weapons</span>
+                        
+                      </th>
+
+                      
+                        <th class="data-cell">Range</th>
+                      
+                        <th class="data-cell">A</th>
+                      
+                        <th class="data-cell">WS</th>
+                      
+                        <th class="data-cell">S</th>
+                      
+                        <th class="data-cell">AP</th>
+                      
+                        <th class="data-cell">D</th>
+                      
+                    </tr>
+                  
+                </thead>
+                <tbody>
+                  
+                    <tr>
+                      <td style="border-top: none; background-color: rgb(223, 224, 226)"></td>
+                      <td style="text-align: left">
+                        <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 0px 4px; line-height: 1.05">
+                          <span style="font-weight: bold">Armoured tracks</span>
+
+                          <!-- Inlined after name Characteristics -->
+                          
+                            
+                              <span if="$text" style="font-size: 0.8em; font-weight: 700; color: var(--primary-color); text-transform: uppercase; line-height: 1.5">
+                                [<span type="markdown">-</span>]
+                              </span>
+                            
+                          
+                        </div>
+                      </td>
+                      
+                        <td class="align-middle" type="markdown">Melee</td>
+                      
+                        <td class="align-middle" type="markdown">3</td>
+                      
+                        <td class="align-middle" type="markdown">4+</td>
+                      
+                        <td class="align-middle" type="markdown">6</td>
+                      
+                        <td class="align-middle" type="markdown">0</td>
+                      
+                        <td class="align-middle" type="markdown">1</td>
+                      
+                    </tr>
+
+                    <!-- Full row spanning characteristic such as notes -->
+                    
+                  
+                  
+                    <tr class="emptyRow">
+                      <td style="border-top: none"></td>
+                      <td colspan="7"></td>
+                    </tr>
+                  
+                </tbody>
+              </table>
+            
+
+            <!-- Remaining Misc profiles -->
+            
+
+            <!-- Keywords / Categories -->
+            <div style="                 position: absolute;                 right: -2px;                 bottom: -16px;                 padding: 0px 42px 0px 8px;                 display: flex;                 align-items: center;                 background-color: rgb(188, 188, 190);                 border: 2px solid var(--primary-color);                 width: calc(100% - 0.9rem);                 background-size: contain;                 min-height: 54px;                 gap: 3px;               ">
+              <span style="font-size: 1.1em">KEYWORDS:</span>
+              <div>
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Vehicle</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Transport</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Dedicated Transport</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Smoke</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Chaos</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Tzeentch</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Rhino</span>
+                    
+                    
+                  
+                
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Section -->
+          <div class="relative w-full flex-1 p-1 pb-50pxpt-5 print:p-20px sm:p-2 sm:pb-50px sm:pt-5 sm:print:p-20px sm:print:pb-50px md:p-20px md:pb-50px md:pt-5 md:print:p-20px md:print:pb-50px">
+            <div style="                 font-size: 1.1em;                 padding: 1px 6px;                 background-color: var(--primary-color);                 color: rgb(255, 255, 255);                 font-weight: 600;                 min-height: 27px;                 display: flex;                 align-items: center;               ">
+              ABILITIES
+            </div>
+
+            <!-- Rules -->
+            <div class="rules-block" style="padding: 5px 2px; gap: 3px; border-bottom: 1px dotted rgb(158, 159, 161); line-height: 1.3; display: flex; flex-wrap: wrap">
+              <span style="font-size: 0.8em">RULES: </span>
+              
+                <span class="split rule" style="white-space: nowrap; font-size: 0.8em; font-weight: 700">Deadly Demise D3</span>
+              
+                <span class="split rule" style="white-space: nowrap; font-size: 0.8em; font-weight: 700">Firing Deck 2</span>
+              
+            </div>
+
+            <!-- Ability Profiles -->
+            <div class="hide-if-empty" style="display: flex; flex-direction: column; gap: 8px; padding: 4px 2px; border-bottom: 1px dotted rgb(158, 159, 161)">
+              
+                <div class="removable" style="font-size: 0.8em; line-height: 1.4">
+                  <span class="rule-name" style="font-weight: 700">Sorcerous Support</span>
+                  
+                    
+                      
+                      
+                        <span class="removable" type="markdown">In your Shooting phase, after this model has shot, select one enemy unit hit by one or more of those attacks. Until the end of the phase, each time a friendly model that disembarked from this Transport this turn makes a Psychic Attack that targets that enemy unit, add 1 to the Hit roll and add 1 to the Wound roll.</span>
+                      
+                    
+                  
+                </div>
+              
+                <div class="removable" style="font-size: 0.8em; line-height: 1.4">
+                  <span class="rule-name" style="font-weight: 700">Transport</span>
+                  
+                    
+                      
+                      
+                        <span class="removable" type="markdown">This model has a transport capacity of 12 <span style="font-variant: small-caps;"><strong>Thousand Sons Infantry</strong></span> models (excluding <span style="font-variant: small-caps;"><strong>Terminator</strong></span> models).</span>
+                      
+                    
+                  
+                </div>
+              
+            </div>
+
+            <!-- Placeholder to prevent text being under keywords -->
+            <div style="margin-bottom: 50px"></div>
+
+            <!-- Faction Keywords/Categories -->
+            <div class="keywords">
+              <span style="font-size: 0.9em; line-height: 1.3">FACTION KEYWORDS:</span>
+              
+                
+                  
+                  <span class="split keyword" style="font-size: 0.9em; font-weight: 600; white-space: nowrap">Thousand Sons</span>
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+                
+              
+            </div>
+
+            <!-- Faction Icon-->
+            <div style="                 position: absolute;                 left: -28px;                 bottom: -16px;                 width: 54px;                 height: 54px;                 transform: rotate(-45deg);                 border: 2px solid var(--primary-color);                 overflow: hidden;                 display: flex;                 align-items: center;                 justify-content: center;               ">
+              <div style="background: center center rgb(188, 188, 190); min-height: 75px; min-width: 76px; transform: rotate(45deg)"> </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    
+
+<div id="unit-forgefiend" class="avoid-page-break" style="margin-bottom: 52px" type="card" catalogue="Chaos - Thousand Sons">
+        
+        <div class="min-h-15rem" style="             padding: 24px 0px;             background: linear-gradient(90deg, rgb(20, 21, 25) 0%, rgb(48, 57, 62) 45%, rgb(73, 74, 79) 100%);             color: rgb(255, 255, 255);             position: relative;           ">
+          <div style="display: flex; gap: 5px">
+            <!-- Header Section -->
+            <div style="padding: 4px 16px; color: rgb(255, 255, 255); position: relative; margin-left: 1.3rem; flex: 1">
+              <!--  Title Background Graphic -->
+              <div style="position: absolute; left: 0px; top: 0px; width: 100%; display: flex">
+                <div style="background-color: var(--primary-color-transparent); height: 80px; min-width: 33%"> </div>
+                <div style="height: 79px; display: flex; flex-direction: column">
+                  <div style="background-color: var(--primary-color-transparent); height: 40px"></div>
+                  <svg height="40" width="100" viewBox="0 0 100 40" style="fill: var(--primary-color-transparent)">
+                    <path d="m0 0h100c-32 0-68 40-100 40z"></path>
+                  </svg>
+                </div>
+                <div style="flex: 10 1 0%; background-color: var(--primary-color-transparent); height: 40px"> </div>
+              </div>
+
+              <!--  Unit Name & Costs -->
+              <div style="                   font-family: ConduitITCStd;                   font-size: 2.5em;                   letter-spacing: 0.1px;                   line-height: 1;                   font-weight: 800;                   text-transform: uppercase;                   z-index: 1;                   position: relative;                   display: flex;                   justify-content: space-between;                   align-items: center;                   margin-bottom: 2px;                 ">
+                
+                
+                  <span>Forgefiend</span>
+                
+                
+                  <span style="text-transform: initial; font-size: 1.2rem">
+                    <span>130</span><span>pts</span>
+                  </span>
+                
+              </div>
+
+              <!-- Models -->
+              <div style="display: flex; flex-direction: column; gap: 6px; z-index: 1; position: relative">
+                
+                    <div style="display: flex; gap: 6px; z-index: 1; position: relative">
+                      <!-- Model Stats -->
+                      
+                        
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">M</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  8"
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">T</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  10
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic sv-stat" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">SV</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  3+ / 5++
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">W</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  12
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">LD</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  6+
+                                </div>
+                              </div>
+                            </div>
+                          
+                            <div class="modelCharacteristic" style="display: flex; flex-direction: column; align-items: center">
+                              <div style="font-size: 0.9em; font-weight: 800">OC</div>
+                              <div style="                                   color: var(--primary-color);                                   padding: 2px;                                   background: var(--primary-color);                                   clip-path: polygon(12% 0px, 100% 0px, 100% 20%, 100% 88%, 88% 100%, 20% 100%, 0px 100%, 0px 12%);                                 ">
+                                <div style="                                     min-width: 3rem;                                     min-height: 3rem;                                     display: flex;                                     align-items: center;                                     justify-content: center;                                     background: rgb(232, 237, 231);                                     clip-path: polygon(10% 0px, 100% 0px, 100% 20%, 100% 90%, 90% 100%, 20% 100%, 0px 100%, 0px 10%);                                     padding: 3px;                                     font-size: 1.6em;                                     font-weight: 800;                                   ">
+                                  3
+                                </div>
+                              </div>
+                            </div>
+                          
+                        
+                      
+
+                      <div class="model" style="display: flex; gap: 1.2rem">
+                        
+                          <!-- Model Name & Options -->
+                          <div class="flex flex-wrap items-center gap-2 model-name-options" style="margin-top: 16px; text-shadow: rgb(0, 0, 0) 0px 0px 5px; display: inline-block">
+                            <span style="white-space: nowrap">
+                              
+                              
+                                <span class="model-name">Forgefiend</span>
+                              
+                            </span>
+                            <div style="font-size: 0.7em">
+                              <div class="model-options"> 3x Ectoplasma cannon, Forgefiend claws</div>
+                            </div>
+                          </div>
+                        
+                      </div>
+                    </div>
+                  
+              </div>
+            </div>
+
+            <!-- Unit Miniature Image -->
+            
+              
+            
+          </div>
+        </div>
+        
+        <div class="border-b-2 border-t-0 border-var(--primary-color) sm:border-l-2 sm:border-r-2" style="display: flex; background-color: rgb(223, 224, 226)">
+          <!-- Left Section -->
+          <div class="pt-5" style="width: 65%; border-right: 2px solid var(--primary-color); position: relative; padding-bottom: 40px; display: flex; flex-direction: column">
+            <!-- Data Profiles -->
+            
+              <table cellspacing="0" class="weapons-table" style="width: 100%">
+                <thead>
+                  
+                    <tr class="uppercase" style="background-color: var(--primary-color); color: rgb(255, 255, 255)">
+                      <th style="max-width: 32px; min-width: 32px; width: 0%">
+                        <div style="display: flex; width: 100%; justify-content: center">
+                          <img class="profile-icon" typename="Ranged Weapons" style="max-width: 20px" src="">
+                        </div>
+                      </th>
+                      <th style="text-align: left" class="row-header">
+                        <span>Ranged Weapons</span>
+                        
+                      </th>
+
+                      
+                        <th class="data-cell">Range</th>
+                      
+                        <th class="data-cell">A</th>
+                      
+                        <th class="data-cell">BS</th>
+                      
+                        <th class="data-cell">S</th>
+                      
+                        <th class="data-cell">AP</th>
+                      
+                        <th class="data-cell">D</th>
+                      
+                    </tr>
+                  
+                </thead>
+                <tbody>
+                  
+                    <tr>
+                      <td style="border-top: none; background-color: rgb(223, 224, 226)"></td>
+                      <td style="text-align: left">
+                        <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 0px 4px; line-height: 1.05">
+                          <span style="font-weight: bold">Ectoplasma cannon (x3)</span>
+
+                          <!-- Inlined after name Characteristics -->
+                          
+                            
+                              <span if="$text" style="font-size: 0.8em; font-weight: 700; color: var(--primary-color); text-transform: uppercase; line-height: 1.5">
+                                [<span type="markdown">Blast</span>]
+                              </span>
+                            
+                          
+                        </div>
+                      </td>
+                      
+                        <td class="align-middle" type="markdown">36"</td>
+                      
+                        <td class="align-middle" type="markdown">D3</td>
+                      
+                        <td class="align-middle" type="markdown">3+</td>
+                      
+                        <td class="align-middle" type="markdown">10</td>
+                      
+                        <td class="align-middle" type="markdown">-3</td>
+                      
+                        <td class="align-middle" type="markdown">3</td>
+                      
+                    </tr>
+
+                    <!-- Full row spanning characteristic such as notes -->
+                    
+                  
+                  
+                    <tr class="emptyRow">
+                      <td style="border-top: none"></td>
+                      <td colspan="7"></td>
+                    </tr>
+                  
+                </tbody>
+              </table>
+            
+              <table cellspacing="0" class="weapons-table" style="width: 100%">
+                <thead>
+                  
+                    <tr class="uppercase" style="background-color: var(--primary-color); color: rgb(255, 255, 255)">
+                      <th style="max-width: 32px; min-width: 32px; width: 0%">
+                        <div style="display: flex; width: 100%; justify-content: center">
+                          <img class="profile-icon" typename="Melee Weapons" style="max-width: 20px" src="">
+                        </div>
+                      </th>
+                      <th style="text-align: left" class="row-header">
+                        <span>Melee Weapons</span>
+                        
+                      </th>
+
+                      
+                        <th class="data-cell">Range</th>
+                      
+                        <th class="data-cell">A</th>
+                      
+                        <th class="data-cell">WS</th>
+                      
+                        <th class="data-cell">S</th>
+                      
+                        <th class="data-cell">AP</th>
+                      
+                        <th class="data-cell">D</th>
+                      
+                    </tr>
+                  
+                </thead>
+                <tbody>
+                  
+                    <tr>
+                      <td style="border-top: none; background-color: rgb(223, 224, 226)"></td>
+                      <td style="text-align: left">
+                        <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 0px 4px; line-height: 1.05">
+                          <span style="font-weight: bold">Forgefiend claws</span>
+
+                          <!-- Inlined after name Characteristics -->
+                          
+                            
+                              <span if="$text" style="font-size: 0.8em; font-weight: 700; color: var(--primary-color); text-transform: uppercase; line-height: 1.5">
+                                [<span type="markdown">-</span>]
+                              </span>
+                            
+                          
+                        </div>
+                      </td>
+                      
+                        <td class="align-middle" type="markdown">Melee</td>
+                      
+                        <td class="align-middle" type="markdown">3</td>
+                      
+                        <td class="align-middle" type="markdown">3+</td>
+                      
+                        <td class="align-middle" type="markdown">6</td>
+                      
+                        <td class="align-middle" type="markdown">0</td>
+                      
+                        <td class="align-middle" type="markdown">1</td>
+                      
+                    </tr>
+
+                    <!-- Full row spanning characteristic such as notes -->
+                    
+                  
+                  
+                    <tr class="emptyRow">
+                      <td style="border-top: none"></td>
+                      <td colspan="7"></td>
+                    </tr>
+                  
+                </tbody>
+              </table>
+            
+
+            <!-- Remaining Misc profiles -->
+            
+
+            <!-- Keywords / Categories -->
+            <div style="                 position: absolute;                 right: -2px;                 bottom: -16px;                 padding: 0px 42px 0px 8px;                 display: flex;                 align-items: center;                 background-color: rgb(188, 188, 190);                 border: 2px solid var(--primary-color);                 width: calc(100% - 0.9rem);                 background-size: contain;                 min-height: 54px;                 gap: 3px;               ">
+              <span style="font-size: 1.1em">KEYWORDS:</span>
+              <div>
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Vehicle</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Walker</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Daemon</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Chaos</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Tzeentch</span>
+                    
+                    
+                  
+                
+                  
+                    
+                      <span class="split rule" style="font-size: 0.9em; font-weight: 800; display: inline-block">Forgefiend</span>
+                    
+                    
+                  
+                
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Section -->
+          <div class="relative w-full flex-1 p-1 pb-50pxpt-5 print:p-20px sm:p-2 sm:pb-50px sm:pt-5 sm:print:p-20px sm:print:pb-50px md:p-20px md:pb-50px md:pt-5 md:print:p-20px md:print:pb-50px">
+            <div style="                 font-size: 1.1em;                 padding: 1px 6px;                 background-color: var(--primary-color);                 color: rgb(255, 255, 255);                 font-weight: 600;                 min-height: 27px;                 display: flex;                 align-items: center;               ">
+              ABILITIES
+            </div>
+
+            <!-- Rules -->
+            <div class="rules-block" style="padding: 5px 2px; gap: 3px; border-bottom: 1px dotted rgb(158, 159, 161); line-height: 1.3; display: flex; flex-wrap: wrap">
+              <span style="font-size: 0.8em">RULES: </span>
+              
+                <span class="split rule" style="white-space: nowrap; font-size: 0.8em; font-weight: 700">Deadly Demise D3</span>
+              
+            </div>
+
+            <!-- Ability Profiles -->
+            <div class="hide-if-empty" style="display: flex; flex-direction: column; gap: 8px; padding: 4px 2px; border-bottom: 1px dotted rgb(158, 159, 161)">
+              
+                <div class="removable" style="font-size: 0.8em; line-height: 1.4">
+                  <span class="rule-name" style="font-weight: 700">Blazing Salvoes</span>
+                  
+                    
+                      
+                      
+                        <span class="removable" type="markdown">In your Shooting phase, after this model has shot, select one enemy unit hit by one or more of those attacks. Until the start of your next turn, that enemy unit is suppressed. While a unit is suppressed, each time a model in that unit makes an attack, subtract 1 from the Hit roll.</span>
+                      
+                    
+                  
+                </div>
+              
+                <div class="removable" style="font-size: 0.8em; line-height: 1.4">
+                  <span class="rule-name" style="font-weight: 700">Damaged: 1-4 wounds remaining</span>
+                  
+                    
+                      
+                      
+                        <span class="removable" type="markdown">While this model has 1-4 wounds remaining, each time this model makes an attack, subtract 1 from the Hit roll.</span>
                       
                     
                   
@@ -5071,6 +6596,20 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
           
         </div>
       
+        <div class="rule removable">
+          <span class="rule-name">Scouts</span>
+          
+            <span class="rule-desc" type="markdown">Some units have 'Scouts x"' listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x". DEDICATED TRANSPORT models can make use of any Scouts x" ability listed in their abilities, or a Scouts x" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that Dedicated Transport model), regardless of how that embarked unit gained this ability. A unit that moves using this ability must end that move more than 9" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first.</span>
+          
+        </div>
+      
+        <div class="rule removable">
+          <span class="rule-name">Firing Deck</span>
+          
+            <span class="rule-desc" type="markdown">Some TRANSPORT models have 'Firing Deck x' listed in their abilities. Each time such a model is selected to shoot in the Shooting phase, you can select up to 'x' models embarked within it whose units have not already shot this phase. Then, for each of those embarked models, you can select one ranged weapon that embarked model is equipped with (excluding weapons with the [ONE SHOT] ability). Until that TRANSPORT model has resolved all of its attacks, it counts as being equipped with all of the weapons you selected in this way, in addition to its other weapons. Until the end of the phase, those selected models' units are not eligible to shoot.</span>
+          
+        </div>
+      
     </div>
   </div>
 
@@ -5213,6 +6752,348 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Text"><span class="str10ColorEnemy"><b>WHEN:</b></span> Your opponent's <a href="/wh40k10ed/the-rules/core-rules/#CHARGE-PHASE">Charge phase</a>, just after an enemy unit ends a <span class="tooltip00011" data-tooltip-content="#tooltip_content00011"><span class="tt kwbu">Charge</span> <span class="tt kwbu">move</span></span>.<br><br><span class="str10ColorEnemy"><b>TARGET:</b></span> One unit from your army that is within 6" of that enemy unit and would be eligible to declare a charge against that enemy unit if it were your Charge phase.<br><br><span class="str10ColorEnemy"><b>EFFECT:</b></span> Your unit now declares a charge that targets only that enemy unit, and you resolve that charge as if it were your Charge phase.<br><br><span class="str10ColorEnemy"><b>RESTRICTIONS:</b></span> You can only select a <span class="kwb">VEHICLE</span> unit from your army if it is a <span class="kwb">WALKER</span>. Note that even if this charge is successful, your unit does not receive any <span class="tooltip00041" data-tooltip-content="#tooltip_content00041"><span class="tt kwbu">Charge</span> <span class="tt kwbu">bonus</span></span> this turn.</div>
 <div class="str10Line"></div>
 </div></div></div></div>
+  </div>
+
+  <div id="roster-section-scoring" class="roster-accordion-panel">
+    <style>#roster-section-scoring details.scoring-accordion summary::-webkit-details-marker{display:none}#roster-section-scoring details.scoring-accordion summary::before{content:"▸ "}#roster-section-scoring details.scoring-accordion[open] summary::before{content:"▾ "}</style>
+    <div class="BreakInsideAvoid" style="padding: 20px; max-width: 900px; margin: 0 auto;">
+      <h2 style="margin-bottom: 16px; font-family: ConduitITCStd, sans-serif; color: var(--primary-color);">10th Edition Scoring</h2>
+      
+      <div style="display: grid; gap: 20px; margin-bottom: 24px;">
+        <div style="border: 1px solid rgba(0,0,0,0.3); border-radius: 4px; padding: 14px 18px; background: #fff;">
+          <div style="font-weight: 700; margin-bottom: 8px;">Mission Setup (Shared)</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; font-size: 0.95em; align-items: end;">
+            <div>
+              <label style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Primary Mission</label>
+              <select id="scoring-primary" style="width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">— Select —</option>
+                <option value="Linchpin">Linchpin</option>
+                <option value="Burden of Trust">Burden of Trust</option>
+                <option value="Take and Hold">Take and Hold</option>
+                <option value="Terraform">Terraform</option>
+                <option value="Purge the Foe">Purge the Foe</option>
+                <option value="Scorched Earth">Scorched Earth</option>
+                <option value="Unexploded Ordnance">Unexploded Ordnance</option>
+                <option value="Hidden Supplies">Hidden Supplies</option>
+                <option value="The Ritual">The Ritual</option>
+                <option value="Supply Drop">Supply Drop</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Deployment</label>
+              <select id="scoring-deployment" style="width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">— Select —</option>
+                <option value="Tipping Point">Tipping Point</option>
+                <option value="Sweeping Engagement">Sweeping Engagement</option>
+                <option value="Search and Destroy">Search and Destroy</option>
+                <option value="Hammer and Anvil">Hammer and Anvil</option>
+                <option value="Dawn of War">Dawn of War</option>
+                <option value="Crucible of Battle">Crucible of Battle</option>
+              </select>
+            </div>
+            <div>
+              <button type="button" onclick="randomizeMissions()" style="padding: 8px 16px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">Randomize All</button>
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Secondary Type</label>
+              <select id="scoring-secondary-type" style="width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="tactical">Tactical Missions</option>
+                <option value="fixed">Fixed Missions</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Fixed Secondary 1</label>
+              <select id="scoring-fixed-1" style="width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">— Select —</option>
+                <option value="Assassination">Assassination</option>
+                <option value="Bring It Down">Bring It Down</option>
+                <option value="Cleanse">Cleanse</option>
+                <option value="Cull the Horde">Cull the Horde</option>
+                <option value="No Prisoners">No Prisoners</option>
+                <option value="Behind Enemy Lines">Behind Enemy Lines</option>
+                <option value="Storm Hostile Objective">Storm Hostile Objective</option>
+                <option value="Engage on All Fronts">Engage on All Fronts</option>
+                <option value="Establish Locus">Establish Locus</option>
+                <option value="Defend Stronghold">Defend Stronghold</option>
+                <option value="Marked for Death">Marked for Death</option>
+                <option value="Secure No Man's Land">Secure No Man's Land</option>
+                <option value="Sabotage">Sabotage</option>
+                <option value="Area Denial">Area Denial</option>
+                <option value="Recover Assets">Recover Assets</option>
+                <option value="A Tempting Target">A Tempting Target</option>
+                <option value="Extend Battle Lines">Extend Battle Lines</option>
+                <option value="Overwhelming Force">Overwhelming Force</option>
+                <option value="Display of Might">Display of Might</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Fixed Secondary 2</label>
+              <select id="scoring-fixed-2" style="width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">— Select —</option>
+                <option value="Assassination">Assassination</option>
+                <option value="Bring It Down">Bring It Down</option>
+                <option value="Cleanse">Cleanse</option>
+                <option value="Cull the Horde">Cull the Horde</option>
+                <option value="No Prisoners">No Prisoners</option>
+                <option value="Behind Enemy Lines">Behind Enemy Lines</option>
+                <option value="Storm Hostile Objective">Storm Hostile Objective</option>
+                <option value="Engage on All Fronts">Engage on All Fronts</option>
+                <option value="Establish Locus">Establish Locus</option>
+                <option value="Defend Stronghold">Defend Stronghold</option>
+                <option value="Marked for Death">Marked for Death</option>
+                <option value="Secure No Man's Land">Secure No Man's Land</option>
+                <option value="Sabotage">Sabotage</option>
+                <option value="Area Denial">Area Denial</option>
+                <option value="Recover Assets">Recover Assets</option>
+                <option value="A Tempting Target">A Tempting Target</option>
+                <option value="Extend Battle Lines">Extend Battle Lines</option>
+                <option value="Overwhelming Force">Overwhelming Force</option>
+                <option value="Display of Might">Display of Might</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <details class="scoring-accordion" style="border: 1px solid rgba(0,0,0,0.2); border-radius: 4px; margin-top: 12px; background: #fafafa;">
+          <summary style="padding: 10px 14px; font-weight: 600; cursor: pointer; list-style: none; color: var(--primary-color);">Deployment Maps &amp; WTC Terrain Reference</summary>
+          <div style="padding: 12px 14px 16px; border-top: 1px solid rgba(0,0,0,0.1); font-size: 0.9em; line-height: 1.5; max-height: 600px; overflow-y: auto;">
+            <p style="margin: 0 0 10px;"><strong>Deployment Zones (Strike Force, 44"×60"):</strong></p>
+            <ul style="margin: 0 0 12px; padding-left: 20px;">
+              <li><strong>Tipping Point</strong> — Long table edges; deployment zones along each player's board edge.</li>
+              <li><strong>Sweeping Engagement</strong> — Short table edges; deployment zones at opposite ends.</li>
+              <li><strong>Search and Destroy</strong> — Diagonal corners; L-shaped deployment zones with centre objective.</li>
+              <li><strong>Hammer and Anvil</strong> — Short edges; rectangular zones at opposite ends.</li>
+              <li><strong>Dawn of War</strong> — Long edges; deployment zones along long table edges.</li>
+              <li><strong>Crucible of Battle</strong> — Corner deployment; each player deploys in a corner quadrant.</li>
+            </ul>
+            <p style="margin: 0 0 10px;"><strong>2024 WTC Terrain:</strong></p>
+            <p style="margin: 0 0 8px;">WTC uses Light, Medium, and Heavy layouts. Typical setup: Ruins (blocking LoS), area terrain (6"×4", 10"×5", 12"×6"), with measurements from deployment edges and objectives. Terrain should not be within 1" of objective markers.</p>
+            <p style="margin: 0 0 10px;"><strong>Interactive Layout Tool:</strong></p>
+            <iframe src="https://tabletop.labrador.dev/40k_layouts?mapPack=gw-chapter-approved-2025-2026&amp;deployment=tipping-point-strike-force&amp;layout=gw-terrain-1" title="40K Layouts - Deployment and Terrain" style="width: 100%; height: 450px; border: 1px solid #ccc; border-radius: 4px; margin-top: 4px;"></iframe>
+            <p style="margin: 8px 0 0; font-size: 0.85em;"><a href="https://tabletop.labrador.dev/40k_layouts" target="_blank" rel="noopener">Open in new tab</a> — Change map pack (e.g. WTC 2024), deployment, and layout in the tool.</p>
+          </div>
+        </details>
+
+        <details class="scoring-accordion" style="border: 1px solid rgba(0,0,0,0.2); border-radius: 4px; margin-top: 12px; background: #fafafa;">
+          <summary style="padding: 10px 14px; font-weight: 600; cursor: pointer; list-style: none; color: var(--primary-color);">Primary Mission Rules</summary>
+          <div style="padding: 12px 14px 16px; border-top: 1px solid rgba(0,0,0,0.1); font-size: 0.9em; line-height: 1.5; max-height: 400px; overflow-y: auto;">
+            <p style="margin: 0 0 8px;"><strong>Linchpin</strong> — R2+: End of Command phase. If you don't control your home objective: 3VP per objective you control. If you do control your home objective: 3VP for it + 5VP per other objective (max 15VP/turn).</p>
+            <p style="margin: 0 0 8px;"><strong>Burden of Trust</strong> — R2+: Select one unit per objective you control to guard it. Score 4VP per objective you control not in your DZ. Opponent scores 2VP per unit guarding an objective at end of your turn.</p>
+            <p style="margin: 0 0 8px;"><strong>Take and Hold</strong> — R2+: End of Command phase. 5VP per objective you control (max 15VP/turn).</p>
+            <p style="margin: 0 0 8px;"><strong>Terraform</strong> — Action: Terraform objectives outside your DZ (Shooting phase). R2+: 4VP per objective controlled (max 12VP). +1VP per terraformed objective at end of turn.</p>
+            <p style="margin: 0 0 8px;"><strong>Purge the Foe</strong> — End of round: 4VP if you destroyed ≥1 enemy unit; +4VP if you destroyed more enemy than friendly. +4VP if you control ≥1 objective; +4VP if you control more than opponent.</p>
+            <p style="margin: 0 0 8px;"><strong>Scorched Earth</strong> — Burn Objective action (R2+). Burn objectives outside your DZ: 5VP in No Man's Land, 10VP in opponent's DZ. R2+: 5VP per objective controlled (max 10VP/turn).</p>
+            <p style="margin: 0 0 8px;"><strong>Unexploded Ordnance</strong> — No Man's Land objectives become Hazard markers. Move Hazard action: push them toward enemy DZ. R2+: 2VP within 12" of opponent DZ; 5VP within 6"; 8VP wholly in opponent DZ.</p>
+            <p style="margin: 0 0 8px;"><strong>Hidden Supplies</strong> — Extra objective in No Man's Land (centre moved 6" toward corner). R2+: 5VP if control more objectives; +5VP if control 2 outside DZ; +5VP if control 1 outside DZ.</p>
+            <p style="margin: 0 0 8px;"><strong>The Ritual</strong> — Action: create new objective in No Man's Land (12" from another, 6" from others). R2+: 5VP per No Man's Land objective controlled (max 15VP/turn).</p>
+            <p style="margin: 0 0 0;"><strong>Supply Drop</strong> — Alpha &amp; Omega objectives in No Man's Land. Alpha removed R4, Omega removed R5. R2+: 5VP R2–3; 8VP R4; 15VP R5 per controlled No Man's Land objective.</p>
+          </div>
+        </details>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div style="border: 1px solid rgba(0,0,0,0.3); border-radius: 4px; padding: 14px 18px; background: #fff;">
+            <div style="font-weight: 700; margin-bottom: 8px;">Player 1 (You) — Tactical Cards</div>
+            <div style="font-size: 0.85em; color: #666; margin-bottom: 8px;">Discard for +1 CP at end of your turn</div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;">
+              <span id="p1-tact-used" style="font-size: 0.8em; color: #888; min-height: 1.2em;"></span>
+              <button type="button" onclick="clearTacticalUsed('p1')" style="padding: 4px 10px; background: #ccc; color: #333; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">Clear Used</button>
+            </div>
+            <div style="display: grid; gap: 8px;">
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <select id="p1-tact-1" style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                  <option value="">— Select —</option>
+                  <option value="Behind Enemy Lines">Behind Enemy Lines</option>
+                  <option value="Storm Hostile Objective">Storm Hostile Objective</option>
+                  <option value="Engage on All Fronts">Engage on All Fronts</option>
+                  <option value="Establish Locus">Establish Locus</option>
+                  <option value="Cleanse">Cleanse</option>
+                  <option value="Assassination">Assassination</option>
+                  <option value="No Prisoners">No Prisoners</option>
+                  <option value="Cull the Horde">Cull the Horde</option>
+                  <option value="Bring It Down">Bring It Down</option>
+                  <option value="Defend Stronghold">Defend Stronghold</option>
+                  <option value="Marked for Death">Marked for Death</option>
+                  <option value="Secure No Man's Land">Secure No Man's Land</option>
+                  <option value="Sabotage">Sabotage</option>
+                  <option value="Area Denial">Area Denial</option>
+                  <option value="Recover Assets">Recover Assets</option>
+                  <option value="A Tempting Target">A Tempting Target</option>
+                  <option value="Extend Battle Lines">Extend Battle Lines</option>
+                  <option value="Overwhelming Force">Overwhelming Force</option>
+                  <option value="Display of Might">Display of Might</option>
+                </select>
+                <button type="button" onclick="discardForCP('p1',1)" title="Discard for +1 CP" style="padding: 4px 8px; background: #888; color: #fff; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">Discard +1CP</button>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <select id="p1-tact-2" style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                  <option value="">— Select —</option>
+                  <option value="Behind Enemy Lines">Behind Enemy Lines</option>
+                  <option value="Storm Hostile Objective">Storm Hostile Objective</option>
+                  <option value="Engage on All Fronts">Engage on All Fronts</option>
+                  <option value="Establish Locus">Establish Locus</option>
+                  <option value="Cleanse">Cleanse</option>
+                  <option value="Assassination">Assassination</option>
+                  <option value="No Prisoners">No Prisoners</option>
+                  <option value="Cull the Horde">Cull the Horde</option>
+                  <option value="Bring It Down">Bring It Down</option>
+                  <option value="Defend Stronghold">Defend Stronghold</option>
+                  <option value="Marked for Death">Marked for Death</option>
+                  <option value="Secure No Man's Land">Secure No Man's Land</option>
+                  <option value="Sabotage">Sabotage</option>
+                  <option value="Area Denial">Area Denial</option>
+                  <option value="Recover Assets">Recover Assets</option>
+                  <option value="A Tempting Target">A Tempting Target</option>
+                  <option value="Extend Battle Lines">Extend Battle Lines</option>
+                  <option value="Overwhelming Force">Overwhelming Force</option>
+                  <option value="Display of Might">Display of Might</option>
+                </select>
+                <button type="button" onclick="discardForCP('p1',2)" title="Discard for +1 CP" style="padding: 4px 8px; background: #888; color: #fff; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">Discard +1CP</button>
+              </div>
+            </div>
+          </div>
+          <div style="border: 1px solid rgba(0,0,0,0.3); border-radius: 4px; padding: 14px 18px; background: #fff;">
+            <div style="font-weight: 700; margin-bottom: 8px;">Player 2 (Opponent) — Tactical Cards</div>
+            <div style="font-size: 0.85em; color: #666; margin-bottom: 8px;">Discard for +1 CP at end of your turn</div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;">
+              <span id="p2-tact-used" style="font-size: 0.8em; color: #888; min-height: 1.2em;"></span>
+              <button type="button" onclick="clearTacticalUsed('p2')" style="padding: 4px 10px; background: #ccc; color: #333; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">Clear Used</button>
+            </div>
+            <div style="display: grid; gap: 8px;">
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <select id="p2-tact-1" style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                  <option value="">— Select —</option>
+                  <option value="Behind Enemy Lines">Behind Enemy Lines</option>
+                  <option value="Storm Hostile Objective">Storm Hostile Objective</option>
+                  <option value="Engage on All Fronts">Engage on All Fronts</option>
+                  <option value="Establish Locus">Establish Locus</option>
+                  <option value="Cleanse">Cleanse</option>
+                  <option value="Assassination">Assassination</option>
+                  <option value="No Prisoners">No Prisoners</option>
+                  <option value="Cull the Horde">Cull the Horde</option>
+                  <option value="Bring It Down">Bring It Down</option>
+                  <option value="Defend Stronghold">Defend Stronghold</option>
+                  <option value="Marked for Death">Marked for Death</option>
+                  <option value="Secure No Man's Land">Secure No Man's Land</option>
+                  <option value="Sabotage">Sabotage</option>
+                  <option value="Area Denial">Area Denial</option>
+                  <option value="Recover Assets">Recover Assets</option>
+                  <option value="A Tempting Target">A Tempting Target</option>
+                  <option value="Extend Battle Lines">Extend Battle Lines</option>
+                  <option value="Overwhelming Force">Overwhelming Force</option>
+                  <option value="Display of Might">Display of Might</option>
+                </select>
+                <button type="button" onclick="discardForCP('p2',1)" title="Discard for +1 CP" style="padding: 4px 8px; background: #888; color: #fff; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">Discard +1CP</button>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <select id="p2-tact-2" style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                  <option value="">— Select —</option>
+                  <option value="Behind Enemy Lines">Behind Enemy Lines</option>
+                  <option value="Storm Hostile Objective">Storm Hostile Objective</option>
+                  <option value="Engage on All Fronts">Engage on All Fronts</option>
+                  <option value="Establish Locus">Establish Locus</option>
+                  <option value="Cleanse">Cleanse</option>
+                  <option value="Assassination">Assassination</option>
+                  <option value="No Prisoners">No Prisoners</option>
+                  <option value="Cull the Horde">Cull the Horde</option>
+                  <option value="Bring It Down">Bring It Down</option>
+                  <option value="Defend Stronghold">Defend Stronghold</option>
+                  <option value="Marked for Death">Marked for Death</option>
+                  <option value="Secure No Man's Land">Secure No Man's Land</option>
+                  <option value="Sabotage">Sabotage</option>
+                  <option value="Area Denial">Area Denial</option>
+                  <option value="Recover Assets">Recover Assets</option>
+                  <option value="A Tempting Target">A Tempting Target</option>
+                  <option value="Extend Battle Lines">Extend Battle Lines</option>
+                  <option value="Overwhelming Force">Overwhelming Force</option>
+                  <option value="Display of Might">Display of Might</option>
+                </select>
+                <button type="button" onclick="discardForCP('p2',2)" title="Discard for +1 CP" style="padding: 4px 8px; background: #888; color: #fff; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">Discard +1CP</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <details class="scoring-accordion" style="border: 1px solid rgba(0,0,0,0.2); border-radius: 4px; margin-top: 12px; background: #fafafa;">
+          <summary style="padding: 10px 14px; font-weight: 600; cursor: pointer; list-style: none; color: var(--primary-color);">Tactical Card Reference</summary>
+          <div style="padding: 12px 14px 16px; border-top: 1px solid rgba(0,0,0,0.1); font-size: 0.9em; line-height: 1.5; max-height: 400px; overflow-y: auto;">
+            <p style="margin: 0 0 6px;"><strong>Behind Enemy Lines</strong> — 3VP: 1 unit wholly in opponent's DZ. 4VP: 2+ units. (R1 redraw ok)</p>
+            <p style="margin: 0 0 6px;"><strong>Storm Hostile Objective</strong> — 4VP: Control objective opponent controlled at start of turn. R2+: 4VP if opponent had none and you took new one. (R1 redraw ok)</p>
+            <p style="margin: 0 0 6px;"><strong>Engage on All Fronts</strong> — Presence = unit in table quarter, &gt;6" from centre. 1VP: 2 quarters. 2VP: 3 quarters. 4VP: 4 quarters.</p>
+            <p style="margin: 0 0 6px;"><strong>Establish Locus</strong> — Action in Shooting. Complete in opponent's DZ or within 6" of centre. 2VP: locus at centre. 4VP: locus in opponent's DZ.</p>
+            <p style="margin: 0 0 6px;"><strong>Cleanse</strong> — Action: unit on objective outside your DZ. 2VP: 1 cleansed. 4VP: 2+ cleansed.</p>
+            <p style="margin: 0 0 6px;"><strong>Assassination</strong> — 5VP per CHARACTER destroyed (Tactical). Fixed: 4VP W4+ CHARACTER, 3VP W&lt;4.</p>
+            <p style="margin: 0 0 6px;"><strong>No Prisoners</strong> — 2VP per unit destroyed (max 5VP). Fixed: Bodyguard/non-CHARACTER. Tactical: any unit.</p>
+            <p style="margin: 0 0 6px;"><strong>Cull the Horde</strong> — 5VP per enemy INFANTRY unit with Starting Strength 13+ destroyed. Redraw if none.</p>
+            <p style="margin: 0 0 6px;"><strong>Bring It Down</strong> — 4VP per MONSTER/VEHICLE destroyed. Fixed: +2VP if 15+ W, +2VP if 20+ W. Redraw if none.</p>
+            <p style="margin: 0 0 6px;"><strong>Defend Stronghold</strong> — 3VP: Control ≥1 objective in your DZ at end of opponent's turn. (R1 redraw ok)</p>
+            <p style="margin: 0 0 6px;"><strong>Marked for Death</strong> — Opponent picks 3 Alpha targets; you pick 1 Gamma. 5VP: destroy Alpha. 2VP: Gamma if no Alpha destroyed.</p>
+            <p style="margin: 0 0 6px;"><strong>Secure No Man's Land</strong> — 2VP: 1 objective in No Man's Land. 5VP: 2+.</p>
+            <p style="margin: 0 0 6px;"><strong>Sabotage</strong> — Action: unit in terrain, not in your DZ. 3VP: sabotage outside opponent DZ. 6VP: sabotage in opponent DZ.</p>
+            <p style="margin: 0 0 6px;"><strong>Area Denial</strong> — 2VP: your unit within 3" of centre, no enemy within 3". 5VP: no enemy within 6".</p>
+            <p style="margin: 0 0 6px;"><strong>Recover Assets</strong> — Action: 2+ units in different zones (your DZ, No Man's Land, opponent DZ). 3VP: 2 units. 5VP: 3+. Redraw if Incursion or &lt;3 units.</p>
+            <p style="margin: 0 0 6px;"><strong>A Tempting Target</strong> — Opponent picks 1 No Man's Land objective. 5VP if you control it.</p>
+            <p style="margin: 0 0 6px;"><strong>Extend Battle Lines</strong> — 4VP: objective in your DZ + in No Man's Land. 2VP: objective in No Man's Land only.</p>
+            <p style="margin: 0 0 6px;"><strong>Overwhelming Force</strong> — 3VP per enemy unit destroyed that started turn in range of objective (max 5VP).</p>
+            <p style="margin: 0 0 0;"><strong>Display of Might</strong> — 4VP: More of your units than opponent's wholly in No Man's Land. (R1 redraw ok)</p>
+          </div>
+        </details>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div style="border: 1px solid rgba(0,0,0,0.3); border-radius: 4px; padding: 14px 18px; background: #fff; overflow-x: auto;">
+            <div style="font-weight: 700; margin-bottom: 12px;">Player 1</div>
+            <div style="font-size: 0.85em; color: #666; margin-bottom: 12px;">Primary max 50VP | Secondary max 40VP | Challenger max 12VP | Battle Ready 10VP</div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.95em;">
+              <thead>
+                <tr style="background: var(--primary-color); color: #fff;">
+                  <th style="padding: 10px 8px; text-align: left; border: 1px solid rgba(0,0,0,0.2);">Round</th>
+                  <th style="padding: 10px 8px; text-align: center; border: 1px solid rgba(0,0,0,0.2);">Primary</th>
+                  <th style="padding: 10px 8px; text-align: center; border: 1px solid rgba(0,0,0,0.2);">Secondary</th>
+                  <th style="padding: 10px 8px; text-align: center; border: 1px solid rgba(0,0,0,0.2);">Challenger</th>
+                  <th style="padding: 10px 8px; text-align: center; border: 1px solid rgba(0,0,0,0.2);">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style="padding: 8px; border: 1px solid #ddd;">1</td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r1-p" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r1-s" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r1-c" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td id="p1-r1-total" style="padding: 8px; border: 1px solid #ddd; text-align: center;">—</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #ddd;">2</td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r2-p" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r2-s" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r2-c" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td id="p1-r2-total" style="padding: 8px; border: 1px solid #ddd; text-align: center;">—</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #ddd;">3</td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r3-p" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r3-s" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r3-c" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td id="p1-r3-total" style="padding: 8px; border: 1px solid #ddd; text-align: center;">—</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #ddd;">4</td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r4-p" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r4-s" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r4-c" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td id="p1-r4-total" style="padding: 8px; border: 1px solid #ddd; text-align: center;">—</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #ddd;">5</td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r5-p" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r5-s" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p1-r5-c" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p1')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td id="p1-r5-total" style="padding: 8px; border: 1px solid #ddd; text-align: center;">—</td></tr>
+              </tbody>
+            </table>
+            <div style="margin-top: 12px; display: flex; gap: 16px; align-items: center;">
+              <label><input id="p1-br" type="checkbox" onchange="updateScoringTotals('p1')"> Battle Ready (10VP)</label>
+              <span>Total: <input id="p1-total" type="number" min="0" max="100" placeholder="0" readonly style="width: 60px; padding: 4px 8px; text-align: center; border: 1px solid #ccc; background: #f5f5f5; color: #222;"></span>
+            </div>
+          </div>
+          <div style="border: 1px solid rgba(0,0,0,0.3); border-radius: 4px; padding: 14px 18px; background: #fff; overflow-x: auto;">
+            <div style="font-weight: 700; margin-bottom: 12px;">Player 2</div>
+            <div style="font-size: 0.85em; color: #666; margin-bottom: 12px;">Primary max 50VP | Secondary max 40VP | Challenger max 12VP | Battle Ready 10VP</div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.95em;">
+              <thead>
+                <tr style="background: var(--primary-color); color: #fff;">
+                  <th style="padding: 10px 8px; text-align: left; border: 1px solid rgba(0,0,0,0.2);">Round</th>
+                  <th style="padding: 10px 8px; text-align: center; border: 1px solid rgba(0,0,0,0.2);">Primary</th>
+                  <th style="padding: 10px 8px; text-align: center; border: 1px solid rgba(0,0,0,0.2);">Secondary</th>
+                  <th style="padding: 10px 8px; text-align: center; border: 1px solid rgba(0,0,0,0.2);">Challenger</th>
+                  <th style="padding: 10px 8px; text-align: center; border: 1px solid rgba(0,0,0,0.2);">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style="padding: 8px; border: 1px solid #ddd;">1</td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r1-p" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r1-s" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r1-c" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td id="p2-r1-total" style="padding: 8px; border: 1px solid #ddd; text-align: center;">—</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #ddd;">2</td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r2-p" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r2-s" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r2-c" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td id="p2-r2-total" style="padding: 8px; border: 1px solid #ddd; text-align: center;">—</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #ddd;">3</td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r3-p" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r3-s" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r3-c" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td id="p2-r3-total" style="padding: 8px; border: 1px solid #ddd; text-align: center;">—</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #ddd;">4</td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r4-p" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r4-s" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r4-c" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td id="p2-r4-total" style="padding: 8px; border: 1px solid #ddd; text-align: center;">—</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #ddd;">5</td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r5-p" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r5-s" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td style="padding: 8px; border: 1px solid #ddd; text-align: center;"><input id="p2-r5-c" type="number" min="0" placeholder="0" oninput="updateScoringTotals('p2')" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc;"></td><td id="p2-r5-total" style="padding: 8px; border: 1px solid #ddd; text-align: center;">—</td></tr>
+              </tbody>
+            </table>
+            <div style="margin-top: 12px; display: flex; gap: 16px; align-items: center;">
+              <label><input id="p2-br" type="checkbox" onchange="updateScoringTotals('p2')"> Battle Ready (10VP)</label>
+              <span>Total: <input id="p2-total" type="number" min="0" max="100" placeholder="0" readonly style="width: 60px; padding: 4px 8px; text-align: center; border: 1px solid #ccc; background: #f5f5f5; color: #222;"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
