@@ -2,20 +2,22 @@
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Thousand Sons Army Roster - By Unit</title>
 <style>
-/* Roster Navigator */
+/* Mobile-first: Roster Navigator */
 .roster-nav {
   position: sticky;
   top: 0;
   z-index: 1000;
   background: linear-gradient(90deg, rgb(20, 21, 25) 0%, rgb(48, 57, 62) 100%);
   color: #fff;
-  padding: 10px 16px;
+  padding: 12px;
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
   border-bottom: 2px solid var(--primary-color, #206173);
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
@@ -23,56 +25,135 @@
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.4);
   color: #fff;
-  padding: 8px 14px;
-  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 48px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.9em;
+  font-size: 1em;
+  width: 100%;
+  text-align: left;
   transition: background 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
 .roster-nav-btn:hover { background: rgba(255,255,255,0.25); }
 .roster-nav-btn.active { background: var(--primary-color, #206173); border-color: var(--primary-color); }
-.roster-units-dropdown {
+.roster-units-dropdown,
+.roster-rules-dropdown,
+.roster-stratagems-dropdown {
   position: relative;
-  display: inline-block;
+  width: 100%;
+}
+.roster-units-dropdown .roster-nav-btn,
+.roster-rules-dropdown .roster-nav-btn,
+.roster-stratagems-dropdown .roster-nav-btn {
+  width: 100%;
 }
 .roster-units-toggle {
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.4);
   color: #fff;
-  padding: 8px 14px;
-  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 48px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.9em;
+  font-size: 1em;
+  -webkit-tap-highlight-color: transparent;
 }
-.roster-units-menu {
+.roster-units-menu.open,
+.roster-rules-menu.open,
+.roster-stratagems-menu.open { display: block; }
+.roster-units-menu,
+.roster-rules-menu,
+.roster-stratagems-menu {
   display: none;
   position: absolute;
   top: 100%;
   left: 0;
+  right: 0;
   margin-top: 4px;
   background: rgb(30, 35, 40);
   border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 4px;
-  min-width: 220px;
-  max-height: 70vh;
+  border-radius: 6px;
+  width: 100%;
+  max-height: 60vh;
   overflow-y: auto;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   z-index: 1001;
+  -webkit-overflow-scrolling: touch;
 }
-.roster-units-menu.open { display: block; }
-.roster-units-menu a {
-  display: block;
-  padding: 10px 14px;
+.roster-units-menu a,
+.roster-rules-menu a,
+.roster-stratagems-menu a {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  min-height: 44px;
   color: #e0e0e0;
   text-decoration: none;
-  font-size: 0.9em;
+  font-size: 1em;
   border-bottom: 1px solid rgba(255,255,255,0.08);
+  -webkit-tap-highlight-color: transparent;
 }
-.roster-units-menu a:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.roster-units-menu a:hover,
+.roster-rules-menu a:hover,
+.roster-stratagems-menu a:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.nav-highlight { animation: nav-highlight-pulse 5s ease-out; }
+@keyframes nav-highlight-pulse {
+  0% { box-shadow: 0 0 0 4px rgba(255, 200, 0, 0.75); }
+  70% { box-shadow: 0 0 0 4px rgba(255, 200, 0, 0.75); }
+  100% { box-shadow: none; }
+}
+
+/* Desktop: compact horizontal nav */
+@media (min-width: 640px) {
+  .roster-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 16px;
+  }
+  .roster-nav-btn {
+    width: auto;
+    min-height: auto;
+    padding: 10px 16px;
+    font-size: 0.95em;
+    text-align: center;
+  }
+  .roster-units-dropdown,
+  .roster-rules-dropdown,
+  .roster-stratagems-dropdown {
+    width: auto;
+    display: inline-block;
+  }
+  .roster-units-dropdown .roster-nav-btn,
+  .roster-rules-dropdown .roster-nav-btn,
+  .roster-stratagems-dropdown .roster-nav-btn {
+    width: auto;
+  }
+  .roster-units-menu,
+  .roster-rules-menu,
+  .roster-stratagems-menu {
+    width: auto;
+    min-width: 240px;
+    left: 0;
+    right: auto;
+  }
+  .roster-units-menu a,
+  .roster-rules-menu a,
+  .roster-stratagems-menu a {
+    padding: 10px 14px;
+    min-height: auto;
+    font-size: 0.9em;
+  }
+}
+
+html, body { height: 100%; margin: 0; }
+body { display: flex; flex-direction: column; overflow: hidden; }
 .roster-accordion-container {
-  height: calc(100vh - 52px);
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -139,6 +220,58 @@
   padding-bottom: 6px;
   border-bottom: 1px solid rgba(0,0,0,0.15);
 }
+
+/* Mobile-first content padding */
+.roster-accordion-panel {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+#roster-section-rules .rule.removable {
+  padding: 16px;
+}
+#roster-section-stratagems {
+  padding-left: max(12px, env(safe-area-inset-left)) !important;
+  padding-right: max(12px, env(safe-area-inset-right)) !important;
+}
+
+/* Stratagems: larger tap targets on mobile */
+.str-accordion summary {
+  min-height: 48px;
+  padding: 14px 16px !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Scoring: stack grid on mobile, larger inputs */
+@media (max-width: 639px) {
+  .scoring-mission-grid {
+    grid-template-columns: 1fr !important;
+  }
+  #roster-section-scoring select,
+  #roster-section-scoring input[type="number"] {
+    min-height: 44px !important;
+    font-size: 16px !important; /* prevents iOS zoom on focus */
+  }
+  #roster-section-scoring button {
+    min-height: 44px !important;
+    padding: 12px 20px !important;
+  }
+  #roster-section-scoring .BreakInsideAvoid {
+    padding: 16px !important;
+  }
+  /* Allow horizontal scroll for wide tables on mobile */
+  .roster-accordion-panel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Scoring accordion: larger tap targets */
+#roster-section-scoring details.scoring-accordion summary {
+  min-height: 48px;
+  padding: 14px 18px !important;
+  -webkit-tap-highlight-color: transparent;
+}
 </style>
 </head>
 <body onmouseover="this.ownerDocument.lastHoveredElement = event.target.closest('.removable');" onmouseleave="this.ownerDocument.lastHoveredElement = undefined;" onclick="
@@ -149,12 +282,82 @@ if (!event.target.closest('#roster-section-scoring')) {
 ">
 
 <script>
+const SCORING_STORAGE_KEY = 'tsons-scoring-data';
+const ACTIVE_TAB_STORAGE_KEY = 'tsons-active-tab';
+
+function saveScoringToStorage() {
+  try {
+    const data = {
+      primary: document.getElementById('scoring-primary')?.value || '',
+      deployment: document.getElementById('scoring-deployment')?.value || '',
+      secondaryType: document.getElementById('scoring-secondary-type')?.value || 'tactical',
+      fixed1: document.getElementById('scoring-fixed-1')?.value || '',
+      fixed2: document.getElementById('scoring-fixed-2')?.value || '',
+      p1t1: document.getElementById('p1-tact-1')?.value || '',
+      p1t2: document.getElementById('p1-tact-2')?.value || '',
+      p2t1: document.getElementById('p2-tact-1')?.value || '',
+      p2t2: document.getElementById('p2-tact-2')?.value || '',
+      usedP1: tacticalUsedP1 || [],
+      usedP2: tacticalUsedP2 || [],
+      cp: document.getElementById('cp-counter')?.textContent || '0',
+      p1: {}, p2: {}
+    };
+    for (let r = 1; r <= 5; r++) {
+      data.p1['r' + r + 'p'] = document.getElementById('p1-r' + r + '-p')?.value || '';
+      data.p1['r' + r + 's'] = document.getElementById('p1-r' + r + '-s')?.value || '';
+      data.p1['r' + r + 'c'] = document.getElementById('p1-r' + r + '-c')?.value || '';
+      data.p2['r' + r + 'p'] = document.getElementById('p2-r' + r + '-p')?.value || '';
+      data.p2['r' + r + 's'] = document.getElementById('p2-r' + r + '-s')?.value || '';
+      data.p2['r' + r + 'c'] = document.getElementById('p2-r' + r + '-c')?.value || '';
+    }
+    data.p1.br = document.getElementById('p1-br')?.checked || false;
+    data.p2.br = document.getElementById('p2-br')?.checked || false;
+    localStorage.setItem(SCORING_STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+function loadScoringFromStorage() {
+  try {
+    const raw = localStorage.getItem(SCORING_STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    const set = (id, val, prop) => { const el = document.getElementById(id); if (el && val != null) el[prop || 'value'] = val; };
+    set('scoring-primary', data.primary);
+    set('scoring-deployment', data.deployment);
+    set('scoring-secondary-type', data.secondaryType);
+    set('scoring-fixed-1', data.fixed1);
+    set('scoring-fixed-2', data.fixed2);
+    set('p1-tact-1', data.p1t1);
+    set('p1-tact-2', data.p1t2);
+    set('p2-tact-1', data.p2t1);
+    set('p2-tact-2', data.p2t2);
+    set('cp-counter', data.cp, 'textContent');
+    if (data.usedP1 && Array.isArray(data.usedP1)) tacticalUsedP1 = data.usedP1;
+    if (data.usedP2 && Array.isArray(data.usedP2)) tacticalUsedP2 = data.usedP2;
+    updateTacticalUsedDisplay('p1');
+    updateTacticalUsedDisplay('p2');
+    if (data.p1) for (let r = 1; r <= 5; r++) {
+      set('p1-r' + r + '-p', data.p1['r' + r + 'p']);
+      set('p1-r' + r + '-s', data.p1['r' + r + 's']);
+      set('p1-r' + r + '-c', data.p1['r' + r + 'c']);
+      set('p2-r' + r + '-p', data.p2['r' + r + 'p']);
+      set('p2-r' + r + '-s', data.p2['r' + r + 's']);
+      set('p2-r' + r + '-c', data.p2['r' + r + 'c']);
+    }
+    set('p1-br', data.p1?.br, 'checked');
+    set('p2-br', data.p2?.br, 'checked');
+    updateScoringTotals('p1');
+    updateScoringTotals('p2');
+  } catch (e) {}
+}
+
 function adjustCP(delta) {
   const el = document.getElementById('cp-counter');
   if (!el) return;
   let val = parseInt(el.textContent) + delta;
   val = Math.max(0, val);
   el.textContent = val;
+  saveScoringToStorage();
 }
 function showRosterSection(sectionId) {
   document.querySelectorAll('.roster-accordion-panel').forEach(p => p.classList.remove('active'));
@@ -164,21 +367,96 @@ function showRosterSection(sectionId) {
   if (panel) panel.classList.add('active');
   if (btn) btn.classList.add('active');
   document.getElementById('roster-units-menu').classList.remove('open');
+  var rulesMenu = document.getElementById('roster-rules-menu');
+  var stratMenu = document.getElementById('roster-stratagems-menu');
+  if (rulesMenu) rulesMenu.classList.remove('open');
+  if (stratMenu) stratMenu.classList.remove('open');
+  try { localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, sectionId); } catch (e) {}
 }
 function showUnit(unitId) {
   showRosterSection('roster-section-units');
   var el = document.getElementById(unitId);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   document.getElementById('roster-units-menu').classList.remove('open');
 }
 function toggleUnitsMenu() {
-  showRosterSection('roster-section-units');
-  document.getElementById('roster-units-menu').classList.toggle('open');
+  var unitsPanel = document.getElementById('roster-section-units');
+  var isUnitsActive = unitsPanel && unitsPanel.classList.contains('active');
+  if (isUnitsActive) {
+    document.getElementById('roster-units-menu').classList.toggle('open');
+  } else {
+    showRosterSection('roster-section-units');
+  }
+}
+function showRule(ruleId) {
+  showRosterSection('roster-section-rules');
+  var el = document.getElementById(ruleId);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.remove('nav-highlight');
+    el.offsetHeight;
+    el.classList.add('nav-highlight');
+    setTimeout(function() { el.classList.remove('nav-highlight'); }, 5000);
+  }
+  var m = document.getElementById('roster-rules-menu');
+  if (m) m.classList.remove('open');
+}
+function showStratagem(stratId) {
+  showRosterSection('roster-section-stratagems');
+  var el = document.getElementById(stratId);
+  if (el) {
+    el.setAttribute('open', '');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    var wrap = el.querySelector('.str10Wrap');
+    if (wrap) {
+      wrap.classList.remove('nav-highlight');
+      wrap.offsetHeight;
+      wrap.classList.add('nav-highlight');
+      setTimeout(function() { wrap.classList.remove('nav-highlight'); }, 5000);
+    }
+  }
+  var m = document.getElementById('roster-stratagems-menu');
+  if (m) m.classList.remove('open');
+}
+function toggleRulesMenu() {
+  var panel = document.getElementById('roster-section-rules');
+  var isActive = panel && panel.classList.contains('active');
+  if (isActive) {
+    document.getElementById('roster-rules-menu').classList.toggle('open');
+  } else {
+    showRosterSection('roster-section-rules');
+  }
+}
+function toggleStratagemsMenu() {
+  var panel = document.getElementById('roster-section-stratagems');
+  var isActive = panel && panel.classList.contains('active');
+  if (isActive) {
+    document.getElementById('roster-stratagems-menu').classList.toggle('open');
+  } else {
+    showRosterSection('roster-section-stratagems');
+  }
 }
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.roster-units-dropdown')) {
     document.getElementById('roster-units-menu').classList.remove('open');
   }
+  if (!e.target.closest('.roster-rules-dropdown')) {
+    var rm = document.getElementById('roster-rules-menu');
+    if (rm) rm.classList.remove('open');
+  }
+  if (!e.target.closest('.roster-stratagems-dropdown')) {
+    var sm = document.getElementById('roster-stratagems-menu');
+    if (sm) sm.classList.remove('open');
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadScoringFromStorage();
+  document.getElementById('roster-section-scoring')?.addEventListener('change', saveScoringToStorage);
+  document.getElementById('roster-section-scoring')?.addEventListener('input', saveScoringToStorage);
+  var savedTab = null;
+  try { savedTab = localStorage.getItem(ACTIVE_TAB_STORAGE_KEY); } catch (e) {}
+  if (savedTab && document.getElementById(savedTab)) showRosterSection(savedTab);
 });
 
 // Scoring - 10th Edition Mission Decks (Chapter Approved 2025-26)
@@ -224,6 +502,7 @@ function randomizeMissions() {
     p2t1.value = p2drawn[0];
     p2t2.value = p2drawn[1];
   }
+  saveScoringToStorage();
 }
 
 let tacticalUsedP1 = [];
@@ -255,11 +534,13 @@ function discardForCP(player, slot) {
   const cpEl = document.getElementById('cp-counter');
   if (cpEl) cpEl.textContent = Math.max(0, parseInt(cpEl.textContent || 0) + 1);
   drawNewTacticalCard(player, slot);
+  saveScoringToStorage();
 }
 
 function clearTacticalUsed(player) {
   if (player === 'p1') tacticalUsedP1 = []; else tacticalUsedP2 = [];
   updateTacticalUsedDisplay(player);
+  saveScoringToStorage();
 }
 
 function updateTacticalUsedDisplay(player) {
@@ -268,6 +549,24 @@ function updateTacticalUsedDisplay(player) {
   if (el) el.textContent = used.length ? 'Used: ' + used.join(', ') : '';
 }
 
+const CHALLENGER_CARDS = [
+  {n:'Burst of Speed',s:'0CP',m:'3VP: 2+ units attacked same enemy, caused wounds',d:'End Shooting: unit can move D6". OR 3VP: Focused Effort.'},
+  {n:'Opportunistic Strike',s:'0CP',m:'3VP: 2+ enemy units lost models',d:'Shooting: 6D6, 4+ = 1MW to enemy within 6". OR 3VP: Sow Chaos.'},
+  {n:'Force a Breach',s:'0CP',m:'3VP: Secure Extraction Zone action',d:'Movement: move through models/terrain. OR Action: unit near edge, 3VP.'},
+  {n:'Great Haste',s:'0CP',m:'3VP: unit in opponent DZ',d:'Movement: +D6" Move. OR 3VP: Over the Line.'},
+  {n:'Pivotal Moment',s:'0CP',m:'3VP: destroyed enemy unit',d:'Movement: Advance/Fall Back = still shoot & charge. OR 3VP: Attrition.'},
+  {n:'Renewed Focus',s:'0CP',m:'3VP: Establish Comms action',d:'Shooting/Fight: re-roll 1s to hit/wound. OR Action: unit 15" from allies, 3VP.'},
+  {n:'Harboured Power',s:'0CP',m:'1VP per objective (max 3VP)',d:'Shooting/Fight: [HAZARDOUS] + [LETHAL HITS] or [SUSTAINED 1]. OR 1VP per objective.'},
+  {n:'All In',s:'0CP',m:'3VP: Self Preservation action',d:'Fight: 6" Pile-in/Consolidate. OR Action: 18" from enemies, 3VP.'},
+  {n:'Strategic Retreat',s:'0CP',m:'3VP: mission varies',d:'Movement: Fall Back and still shoot/charge. OR 3VP mission.'}
+];
+function drawChallengerCard() {
+  const card = CHALLENGER_CARDS[Math.floor(Math.random() * CHALLENGER_CARDS.length)];
+  const el = document.getElementById('challenger-drawn');
+  if (el) el.innerHTML = '<strong>' + card.n + '</strong> (' + card.s + ')<br><em>Stratagem:</em> ' + card.d + '<br><em>Mission:</em> ' + card.m;
+  const wrap = document.getElementById('challenger-result');
+  if (wrap) wrap.style.display = 'block';
+}
 function updateScoringTotals(player) {
   let sum = 0;
   for (let r = 1; r <= 5; r++) {
@@ -283,6 +582,7 @@ function updateScoringTotals(player) {
   const final = sum + (br ? 10 : 0);
   const totalInput = document.getElementById(player + '-total');
   if (totalInput) totalInput.value = final;
+  saveScoringToStorage();
 }
 </script>
 
@@ -302,8 +602,55 @@ function updateScoringTotals(player) {
       <a href="#" onclick="showUnit('unit-forgefiend'); return false;">Forgefiend</a>
     </div>
   </div>
-  <button class="roster-nav-btn" data-section="roster-section-rules" onclick="showRosterSection('roster-section-rules')">Rule References</button>
-  <button class="roster-nav-btn" data-section="roster-section-stratagems" onclick="showRosterSection('roster-section-stratagems')">Stratagems</button>
+  <div class="roster-rules-dropdown">
+    <button class="roster-nav-btn roster-units-toggle" data-section="roster-section-rules" onclick="toggleRulesMenu()">Rule References ▾</button>
+    <div id="roster-rules-menu" class="roster-rules-menu">
+      <a href="#" onclick="showRule('rule-kindred-sorcery'); return false;">Kindred Sorcery</a>
+      <a href="#" onclick="showRule('rule-deadly-demise-d3'); return false;">Deadly Demise D3</a>
+      <a href="#" onclick="showRule('rule-cabal-of-sorcerers'); return false;">Cabal of Sorcerers</a>
+      <a href="#" onclick="showRule('rule-deep-strike'); return false;">Deep Strike</a>
+      <a href="#" onclick="showRule('rule-ignores-cover'); return false;">Ignores Cover</a>
+      <a href="#" onclick="showRule('rule-sustained-hits'); return false;">Sustained Hits</a>
+      <a href="#" onclick="showRule('rule-psychic'); return false;">Psychic</a>
+      <a href="#" onclick="showRule('rule-devastating-wounds'); return false;">Devastating Wounds</a>
+      <a href="#" onclick="showRule('rule-leader'); return false;">Leader</a>
+      <a href="#" onclick="showRule('rule-pistol'); return false;">Pistol</a>
+      <a href="#" onclick="showRule('rule-anti'); return false;">Anti-</a>
+      <a href="#" onclick="showRule('rule-rapid-fire'); return false;">Rapid Fire</a>
+      <a href="#" onclick="showRule('rule-blast'); return false;">Blast</a>
+      <a href="#" onclick="showRule('rule-torrent'); return false;">Torrent</a>
+      <a href="#" onclick="showRule('rule-lethal-hits'); return false;">Lethal Hits</a>
+      <a href="#" onclick="showRule('rule-precision'); return false;">Precision</a>
+      <a href="#" onclick="showRule('rule-deadly-demise-d6'); return false;">Deadly Demise D6</a>
+      <a href="#" onclick="showRule('rule-feel-no-pain-5'); return false;">Feel No Pain 5+</a>
+      <a href="#" onclick="showRule('rule-infiltrators'); return false;">Infiltrators</a>
+      <a href="#" onclick="showRule('rule-stealth'); return false;">Stealth</a>
+      <a href="#" onclick="showRule('rule-scouts'); return false;">Scouts</a>
+      <a href="#" onclick="showRule('rule-firing-deck'); return false;">Firing Deck</a>
+    </div>
+  </div>
+  <div class="roster-stratagems-dropdown">
+    <button class="roster-nav-btn roster-units-toggle" data-section="roster-section-stratagems" onclick="toggleStratagemsMenu()">Stratagems ▾</button>
+    <div id="roster-stratagems-menu" class="roster-stratagems-menu">
+      <a href="#" onclick="showStratagem('strat-psychic-dominion'); return false;">Psychic Dominion</a>
+      <a href="#" onclick="showStratagem('strat-destined-by-fate'); return false;">Destined by Fate</a>
+      <a href="#" onclick="showStratagem('strat-command-re-roll'); return false;">Command Re-roll</a>
+      <a href="#" onclick="showStratagem('strat-egotistical-power'); return false;">Egotistical Power</a>
+      <a href="#" onclick="showStratagem('strat-desecration-of-worlds'); return false;">Desecration of Worlds</a>
+      <a href="#" onclick="showStratagem('strat-insane-bravery'); return false;">Insane Bravery</a>
+      <a href="#" onclick="showStratagem('strat-arcane-focus'); return false;">Arcane Focus</a>
+      <a href="#" onclick="showStratagem('strat-devastating-sorcery'); return false;">Devastating Sorcery</a>
+      <a href="#" onclick="showStratagem('strat-grenade'); return false;">Grenade</a>
+      <a href="#" onclick="showStratagem('strat-tank-shock'); return false;">Tank Shock</a>
+      <a href="#" onclick="showStratagem('strat-counter-offensive'); return false;">Counter-Offensive</a>
+      <a href="#" onclick="showStratagem('strat-epic-challenge'); return false;">Epic Challenge</a>
+      <a href="#" onclick="showStratagem('strat-rapid-ingress'); return false;">Rapid Ingress</a>
+      <a href="#" onclick="showStratagem('strat-fire-overwatch'); return false;">Fire Overwatch</a>
+      <a href="#" onclick="showStratagem('strat-go-to-ground'); return false;">Go to Ground</a>
+      <a href="#" onclick="showStratagem('strat-smokescreen'); return false;">Smokescreen</a>
+      <a href="#" onclick="showStratagem('strat-heroic-intervention'); return false;">Heroic Intervention</a>
+    </div>
+  </div>
   <button class="roster-nav-btn" data-section="roster-section-scoring" onclick="showRosterSection('roster-section-scoring')">Scoring</button>
 </nav>
 
@@ -6278,9 +6625,9 @@ html {
   .cp-btn:hover { background: rgba(255,255,255,0.25); }
   #cp-counter { min-width: 1.5em; text-align: center; font-variant-numeric: tabular-nums; }
   .Columns2 {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
   .str-phase-header {
     grid-column: 1 / -1;
@@ -6295,8 +6642,21 @@ html {
   }
   .str-phase-header:first-child { margin-top: 0; }
   @media screen and (max-width: 900px) {
-    .Columns2 { grid-template-columns: 1fr; }
+    .Columns2 { gap: 4px; }
   }
+  .str-accordion { margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+  .str-accordion:last-child { border-bottom: none; margin-bottom: 0; }
+  .str-accordion summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; cursor: pointer; list-style: none; font-size: 0.9em; background: rgba(255,255,255,0.03); border-radius: 4px; margin: 0 -4px 4px -4px; }
+  .str-accordion summary::-webkit-details-marker { display: none; }
+  .str-accordion summary::before { content: "▸ "; color: rgba(255,255,255,0.5); font-size: 0.85em; }
+  .str-accordion[open] summary::before { content: "▾ "; }
+  .str-accordion summary:hover { background: rgba(255,255,255,0.06); }
+  .str-acc-name { font-weight: 700; flex-shrink: 0; }
+  .str-accordion.str10ColorEither .str-acc-name { color: #0d9488; }
+  .str-accordion.str10ColorYour .str-acc-name { color: #0284c7; }
+  .str-accordion.str10ColorEnemy .str-acc-name { color: #dc2626; }
+  .str-acc-cp { font-size: 0.8em; opacity: 0.9; flex-shrink: 0; }
+  .str-acc-oneliner { color: rgba(255,255,255,0.75); font-size: 0.9em; flex: 1; min-width: 0; }
   .str10Wrap {
     background: rgb(28, 30, 35);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -6440,7 +6800,7 @@ html {
         
       
       
-        <div class="rule removable">
+        <div id="rule-kindred-sorcery" class="rule removable">
           <span class="rule-name">Kindred Sorcery</span>
           
             <span class="rule-desc" type="markdown">In your Command phase, you can select one of the abilities listed below to take effect until the start of your next Command phase. You can only select each of these abilities once per battle.
@@ -6453,14 +6813,14 @@ Psychic weapons equipped by <span style="font-variant: small-caps;"><strong>Thou
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-deadly-demise-d3" class="rule removable">
           <span class="rule-name">Deadly Demise D3</span>
           
             <span class="rule-desc" type="markdown">Some models have 'Deadly Demise x' listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6" of that model suffers a number of mortal wounds denoted by 'x' (if this is a random number, roll separately for each unit within 6").</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-cabal-of-sorcerers" class="rule removable">
           <span class="rule-name">Cabal of Sorcerers</span>
           
             <span class="rule-desc" type="markdown">If your army Faction is <span style="font-variant: small-caps;"><strong>Thousand Sons</strong></span>, at the start of your Shooting phase, one or more models from your army with this ability can attempt Rituals. To do so, select one model from your army with this ability that has not yet attempted a Ritual this turn and select one Ritual no model from your army has attempted to manifest this turn, then take a Psychic test by following the sequence below:
@@ -6472,7 +6832,7 @@ Psychic weapons equipped by <span style="font-variant: small-caps;"><strong>Thou
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-deep-strike" class="rule removable">
           <span class="rule-name">Deep Strike</span>
           
             <span class="rule-desc" type="markdown">During the Declare Battle Formations step, if every model in a unit has this ability, you can set it up in Reserves instead of setting it up on the battlefield. If you do, in the Reinforcements step of one of your Movement phases you can set up this unit anywhere on the battlefield that is more than 9" horizontally away from all enemy models.
@@ -6480,35 +6840,35 @@ If a unit with the Deep Strike ability arrives from Strategic Reserves, the cont
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-ignores-cover" class="rule removable">
           <span class="rule-name">Ignores Cover</span>
           
             <span class="rule-desc" type="markdown">Weapons with <strong>[IGNORES COVER]</strong> in their profile are known as Ignores Cover weapons. Each time an attack is made with such a weapon, the target cannot have the Benefit of Cover against that attack.</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-sustained-hits" class="rule removable">
           <span class="rule-name">Sustained Hits</span>
           
             <span class="rule-desc" type="markdown">Weapons with <strong>[SUSTAINED HITS X]</strong> in their profile are known as Sustained Hits weapons. Each time an attack is made with such a weapon, if a Critical Hit is rolled, that attack scores a number of additional hits on the target as denoted by ‘x’</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-psychic" class="rule removable">
           <span class="rule-name">Psychic</span>
           
             <span class="rule-desc" type="markdown">Some weapons and abilities can only be used by <strong><span style="font-variant: small-caps;">Psykers</span></strong>. Such weapons and abilities are tagged with the word 'Psychic'. If a Psychic weapon or ability causes any unit to suffer one or more wounds, each of those wounds is considered to have been inflicted by a Psychic Attack.</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-devastating-wounds" class="rule removable">
           <span class="rule-name">Devastating Wounds</span>
           
             <span class="rule-desc" type="markdown">Weapons with <strong>[DEVASTATING WOUNDS]</strong> in their profile are known as Devastating Wounds weapons. Each time an attack is made with such a weapon, if that attack scores a Critical Wound, no saving throw of any kind can be made against that attack (including invulnerable saving throws). Such attacks are only allocated to models after all other attacks made by the attacking unit have been allocated and resolved. After that attack is allocated and after any modifiers are applied, it inflicts a number of mortal wounds on the target equal to the Damage characteristic of that attack, instead of inflicting damage normally.</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-leader" class="rule removable">
           <span class="rule-name">Leader</span>
           
             <span class="rule-desc" type="markdown">While a Bodyguard unit contains a Leader, it is known as an Attached unit and, with the exception of rules that are triggered when units are destroyed (pg 12), it is treated as a single unit for all rules purposes. Each time an attack targets an Attached unit, until the attacking unit has resolved all of its attacks, you must use the Toughness characteristic of the Bodyguard models in that unit, even if a Leader in that unit has a different Toughness characteristic. Each time an attack successfully wounds an Attached unit, that attack cannot be allocated to a Character model in that unit, even if that Character model has lost one or more wounds or has already had attacks allocated to it this phase. As soon as the last Bodyguard model in an Attached unit has been destroyed, any attacks made against that unit that have yet to be allocated can then be allocated to Character models in that unit.
@@ -6518,7 +6878,7 @@ Each time a unit that is part of an Attached unit is destroyed, it does not have
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-pistol" class="rule removable">
           <span class="rule-name">Pistol</span>
           
             <span class="rule-desc" type="markdown">Weapons with <strong>[PISTOL]</strong> in their profile are known as Pistols. If a unit contains any models equipped with Pistols, that unit is eligible to shoot in its controlling player’s Shooting phase even while it is within Engagement Range of one or more enemy units. When such a unit is selected to shoot, it can only resolve attacks using its Pistols and can only target one of the enemy units it is within Engagement Range of. In such circumstances, a Pistol can target an enemy unit even if other friendly units are within Engagement Range of the same enemy unit.&nbsp;
@@ -6526,84 +6886,84 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-anti" class="rule removable">
           <span class="rule-name">Anti-</span>
           
             <span class="rule-desc" type="markdown">Weapons with <strong>[ANTI-KEYWORD X+]</strong> in their profile are known as Anti weapons. Each time an attack is made with such a weapon against a target with the keyword after the word ‘Anti-’, an unmodified Wound roll of ‘x+’ scores a Critical Wound.</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-rapid-fire" class="rule removable">
           <span class="rule-name">Rapid Fire</span>
           
             <span class="rule-desc" type="markdown">Weapons with <strong>[RAPID FIRE X]</strong> in their profile are known as Rapid Fire weapons. Each time such a weapon targets a unit within half that weapon’s range, the Attacks characteristic of that weapon is increased by the amount denoted by ‘x’.</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-blast" class="rule removable">
           <span class="rule-name">Blast</span>
           
             <span class="rule-desc" type="markdown">Weapons with <strong>[BLAST]</strong> in their profile are known as Blast weapons, and they make a random number of attacks. Each time you determine how many attacks are made with a Blast weapon, add 1 to the result for every five models that were in the target unit when you selected it as the target (rounding down). Blast weapons can never be used to make attacks against a unit that is within Engagement Range of one or more units from the attacking model’s army (including its own unit).</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-torrent" class="rule removable">
           <span class="rule-name">Torrent</span>
           
             <span class="rule-desc" type="markdown">Weapons with <strong>[TORRENT]</strong> in their profile are known as Torrent weapons. Each time an attack is made with such a weapon, that attack automatically hits the target.</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-lethal-hits" class="rule removable">
           <span class="rule-name">Lethal Hits</span>
           
             <span class="rule-desc" type="markdown">Weapons with <strong>[LETHAL HITS]</strong> in their profile are known as Lethal Hits weapons. Each time an attack is made with such a weapon, a Critical Hit automatically wounds the target.</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-precision" class="rule removable">
           <span class="rule-name">Precision</span>
           
             <span class="rule-desc" type="markdown">Weapons with <strong>[PRECISION]</strong> in their profile are known as Precision weapons. Each time an attack made with such a weapon successfully wounds an Attached unit, if a Character model in that unit is visible to the attacking model, the attacking model’s player can choose to have that attack allocated to that Character model instead of following the normal attack sequence.</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-deadly-demise-d6" class="rule removable">
           <span class="rule-name">Deadly Demise D6</span>
           
             <span class="rule-desc" type="markdown">Some models have 'Deadly Demise x' listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6" of that model suffers a number of mortal wounds denoted by 'x' (if this is a random number, roll separately for each unit within 6").</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-feel-no-pain-5" class="rule removable">
           <span class="rule-name">Feel No Pain 5+</span>
           
             <span class="rule-desc" type="markdown">Some models have 'Feel No Pain x+' listed in their abilities. Each time a model with this ability suffers damage and so would lose a wound (including wounds lost due to mortal wounds), roll one D6: if the result is greater than or equal to the number denoted by 'x: that wound is ignored and is not lost. If a model has more than one Feel No Pain ability, you can only use one of those abilities each time that model suffers damage and so would lose a wound.</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-infiltrators" class="rule removable">
           <span class="rule-name">Infiltrators</span>
           
             <span class="rule-desc" type="markdown">During deployment, if every model in a unit has this ability, then when you set it up, it can be set up anywhere on the battlefield that is more than 9" horizontally away from the enemy deployment zone and all enemy models.</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-stealth" class="rule removable">
           <span class="rule-name">Stealth</span>
           
             <span class="rule-desc" type="markdown">If every model in a unit has this ability, then each time a ranged attack is made against it, subtract 1 from that attack’s Hit roll.</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-scouts" class="rule removable">
           <span class="rule-name">Scouts</span>
           
             <span class="rule-desc" type="markdown">Some units have 'Scouts x"' listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x". DEDICATED TRANSPORT models can make use of any Scouts x" ability listed in their abilities, or a Scouts x" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that Dedicated Transport model), regardless of how that embarked unit gained this ability. A unit that moves using this ability must end that move more than 9" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first.</span>
           
         </div>
       
-        <div class="rule removable">
+        <div id="rule-firing-deck" class="rule removable">
           <span class="rule-name">Firing Deck</span>
           
             <span class="rule-desc" type="markdown">Some TRANSPORT models have 'Firing Deck x' listed in their abilities. Each time such a model is selected to shoot in the Shooting phase, you can select up to 'x' models embarked within it whose units have not already shot this phase. Then, for each of those embarked models, you can select one ranged weapon that embarked model is equipped with (excluding weapons with the [ONE SHOT] ability). Until that TRANSPORT model has resolved all of its attacks, it counts as being equipped with all of the weapons you selected in this way, in addition to its other weapons. Until the end of the phase, those selected models' units are not eligible to shoot.</span>
@@ -6614,8 +6974,8 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
   </div>
 
   </div>
-  <div id="roster-section-stratagems" class="roster-accordion-panel">
-    <div class="BreakInsideAvoid"><a name="Stratagems-1"></a><div class="str-header-with-cp"><h2>Stratagems</h2><div class="cp-counter-wrap"><button type="button" onclick="adjustCP(-1)" class="cp-btn">−</button><span id="cp-counter">0</span><button type="button" onclick="adjustCP(1)" class="cp-btn">+</button><span class="cp-label">CP</span></div></div><div class="Columns2"><h3 class="str-phase-header">Any Phase</h3><div class=" str10Wrap BreakInsideAvoid str10ColorEither"><div class="str10Name">PSYCHIC DOMINION</div>
+  <div id="roster-section-stratagems" class="roster-accordion-panel" style="padding: 12px 16px; background: rgb(20, 21, 25); color: rgb(230, 230, 230);">
+    <div class="BreakInsideAvoid"><a name="Stratagems-1"></a><div class="str-header-with-cp"><h2>Stratagems</h2><div class="cp-counter-wrap"><button type="button" onclick="adjustCP(-1)" class="cp-btn">−</button><span id="cp-counter">0</span><button type="button" onclick="adjustCP(1)" class="cp-btn">+</button><span class="cp-label">CP</span></div></div><div class="Columns2"><h3 class="str-phase-header">Any Phase</h3><details id="strat-psychic-dominion" class="str-accordion str10ColorEither"><summary><span class="str-acc-name">PSYCHIC DOMINION</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">Enemy psychic [hazardous]; your unit FNP 4+ vs psychic</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorEither"><div class="str10Name">PSYCHIC DOMINION</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(40%) sepia(12%) saturate(2210%) hue-rotate(121deg) brightness(94%) contrast(88%);" ;="" class="str10Any str10ColorEither"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Grand Coven – Epic Deed Stratagem</div>
 <div class="str10Line"></div>
@@ -6623,7 +6983,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorEither"><b>WHEN:</b></span> Any phase, just after an enemy unit has selected its targets.<br><br><span class="str10ColorEither"><b>TARGET:</b></span> One <span class="tooltip00001 tooltipstered" data-tooltip-content="#tooltip_content00001" data-tooltip-anchor="#tooltip_content00001"><span class="kwb kwbu">THOUSAND</span> <span class="kwb kwbu">SONS</span></span> unit from your army that was selected as the target of one or more of the attacking unit’s attacks.<br><br><span class="str10ColorEither"><b>EFFECT:</b></span> Until the end of the phase, <span class="tooltip00025 tooltipstered" data-tooltip-content="#tooltip_content00025" style="opacity: 1;"><span class="tt kwbu">Psychic</span> <span class="tt kwbu">weapons</span></span> equipped by models in the attacking unit have the <span class="kwb2 bluefont"><span class="tooltip00010 tooltipstered" data-tooltip-content="#tooltip_content00010"><span class="tt kwbu">[hazardous]</span></span></span> ability, and models in your unit have the <span class="tooltip00028 tooltipstered" data-tooltip-content="#tooltip_content00028" style="opacity: 1;"><span class="tt kwbu">Feel</span> <span class="tt kwbu">No</span> <span class="tt kwbu">Pain</span> <span class="tt kwbu">4+</span></span> ability against <span class="tooltip00025" data-tooltip-content="#tooltip_content00025"><span class="tt kwbu">Psychic</span> <span class="tt kwbu">Attacks</span></span>.</div>
 <div class="str10Line"></div>
-</div></div><div class=" str10Wrap BreakInsideAvoid str10ColorEither"><div class="str10Name">DESTINED BY FATE</div>
+</div></details><details id="strat-destined-by-fate" class="str-accordion str10ColorEither"><summary><span class="str-acc-name">DESTINED BY FATE</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">Change damage to 0 for one failed save (Psyker)</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorEither"><div class="str10Name">DESTINED BY FATE</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(40%) sepia(12%) saturate(2210%) hue-rotate(121deg) brightness(94%) contrast(88%);" ;="" class="str10Any str10ColorEither"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Grand Coven – Epic Deed Stratagem</div>
 <div class="str10Line"></div>
@@ -6631,7 +6991,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorEither"><b>WHEN:</b></span> Any phase, just after a saving throw is failed for a <span class="tooltip00029" data-tooltip-content="#tooltip_content00029" data-tooltip-anchor="#tooltip_content00029"><span class="kwb kwbu">THOUSAND</span> <span class="kwb kwbu">SONS</span> <span class="kwb kwbu">PSYKER</span></span> model from your army. If you are using <a href="/wh40k10ed/the-rules/core-rules/#Fast-Dice-Rolling">fast dice rolling</a>, this Stratagem can still be used after rolling multiple <span class="tooltip00030" data-tooltip-content="#tooltip_content00030"><span class="tt kwbu">saving</span> <span class="tt kwbu">throws</span></span> at once.<br><br><span class="str10ColorEither"><b>TARGET:</b></span> That <span class="kwb">PSYKER</span> model.<br><br><span class="str10ColorEither"><b>EFFECT:</b></span> Change the Damage characteristic of that attack to 0. If you are using fast dice rolling, select one of those attacks you failed a saving throw for.</div>
 <div class="str10Line"></div>
-</div></div><div class=" str10Wrap BreakInsideAvoid str10ColorEither"><div class="str10Name">COMMAND RE-ROLL</div>
+</div></details><details id="strat-command-re-roll" class="str-accordion str10ColorEither"><summary><span class="str-acc-name">COMMAND RE-ROLL</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">Re-roll one Advance, Charge, Hit, Wound, Save, or Desperate Escape</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorEither"><div class="str10Name">COMMAND RE-ROLL</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(40%) sepia(12%) saturate(2210%) hue-rotate(121deg) brightness(94%) contrast(88%);" ;="" class="str10Any str10ColorEither"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Core – Battle Tactic Stratagem</div>
 <div class="str10Line"></div>
@@ -6639,7 +6999,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorEither"><b>WHEN:</b></span> Any phase, just after you make an <span class="tooltip00004 tooltipstered" data-tooltip-content="#tooltip_content00004" style="opacity: 1;"><span class="tt kwbu">Advance</span> <span class="tt kwbu">roll</span></span>, a <span class="tooltip00011 tooltipstered" data-tooltip-content="#tooltip_content00011" style="opacity: 1;"><span class="tt kwbu">Charge</span> <span class="tt kwbu">roll</span></span>, a <span class="tooltip00005 tooltipstered" data-tooltip-content="#tooltip_content00005" style="opacity: 1;"><span class="tt kwbu">Desperate</span> <span class="tt kwbu">Escape</span> <span class="tt kwbu">test</span></span> or a <span class="tooltip00024" data-tooltip-content="#tooltip_content00024"><span class="tt kwbu">Hazardous</span> <span class="tt kwbu">test</span></span> for a unit from your army, or a <span class="tooltip00013" data-tooltip-content="#tooltip_content00013"><span class="tt kwbu">Hit</span> <span class="tt kwbu">roll</span></span>, a <span class="tooltip00031" data-tooltip-content="#tooltip_content00031"><span class="tt kwbu">Wound</span> <span class="tt kwbu">roll</span></span>, a Damage roll or a <span class="tooltip00033" data-tooltip-content="#tooltip_content00033"><span class="tt kwbu">saving</span> <span class="tt kwbu">throw</span></span> for a model in that unit, or a roll to determine the number of attacks made with a weapon equipped by a model in that unit. If you are using <a href="/wh40k10ed/the-rules/core-rules/#Fast-Dice-Rolling">fast dice rolling</a>, this Stratagem can still be used after rolling multiple rolls or saving throws at once.<br><br><span class="str10ColorEither"><b>TARGET:</b></span> That unit or model from your army.<br><br><span class="str10ColorEither"><b>EFFECT:</b></span> You <span class="tooltip00063" data-tooltip-content="#tooltip_content00063"><span class="tt kwbu">re-roll</span></span> that roll, test or saving throw. If you are using fast dice rolling, select one of those rolls or saving throws to re-roll.</div>
 <div class="str10Line"></div>
-</div></div><h3 class="str-phase-header">Command Phase</h3><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">EGOTISTICAL POWER</div>
+</div></details><h3 class="str-phase-header">Command Phase</h3><details id="strat-egotistical-power" class="str-accordion str10ColorYour"><summary><span class="str-acc-name">EGOTISTICAL POWER</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">Steal Imbued Manifestation, Psychic Maelstrom, or Wrath of Immaterium</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">EGOTISTICAL POWER</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(23%) sepia(88%) saturate(2002%) hue-rotate(179deg) brightness(87%) contrast(93%);" ;="" class="str10Command str10ColorYour"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Grand Coven – Strategic Ploy Stratagem</div>
 <div class="str10Line"></div>
@@ -6647,7 +7007,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorYour"><b>WHEN:</b></span> Your <a href="/wh40k10ed/the-rules/core-rules/#COMMAND-PHASE">Command phase</a>.<br><br><span class="str10ColorYour"><b>TARGET:</b></span> One <span class="tooltip00029" data-tooltip-content="#tooltip_content00029" data-tooltip-anchor="#tooltip_content00029"><span class="kwb kwbu">THOUSAND</span> <span class="kwb kwbu">SONS</span> <span class="kwb kwbu">PSYKER</span></span> unit from your army.<br><br><span class="str10ColorYour"><b>EFFECT:</b></span> Select the <span class="tooltip00031" data-tooltip-content="#tooltip_content00031"><span class="tt kwbu">Imbued</span> <span class="tt kwbu">Manifestation</span></span>, <span class="tooltip00032" data-tooltip-content="#tooltip_content00032"><span class="tt kwbu">Psychic</span> <span class="tt kwbu">Maelstrom</span></span> or <span class="tooltip00033" data-tooltip-content="#tooltip_content00033"><span class="tt kwbu">Wrath</span> <span class="tt kwbu">of</span> <span class="tt kwbu">the</span> <span class="tt kwbu">Immaterium</span></span> ability. Until the start of your next Command phase, that ability applies to your unit instead of any other <span class="tooltip00034" data-tooltip-content="#tooltip_content00034"><span class="tt kwbu">Kindred</span> <span class="tt kwbu">Sorcery</span></span> ability, even if you have already selected that ability this battle.</div>
 <div class="str10Line"></div>
-</div></div><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">DESECRATION OF WORLDS</div>
+</div></details><details id="strat-desecration-of-worlds" class="str-accordion str10ColorYour"><summary><span class="str-acc-name">DESECRATION OF WORLDS</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">Objective stays yours until opponent has more control</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">DESECRATION OF WORLDS</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(23%) sepia(88%) saturate(2002%) hue-rotate(179deg) brightness(87%) contrast(93%);" ;="" class="str10Command str10ColorYour"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Grand Coven – Epic Deed Stratagem</div>
 <div class="str10Line"></div>
@@ -6655,7 +7015,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorYour"><b>WHEN:</b></span> Your <a href="/wh40k10ed/the-rules/core-rules/#COMMAND-PHASE">Command phase</a>.<br><br><span class="str10ColorYour"><b>TARGET:</b></span> One <span class="tooltip00029" data-tooltip-content="#tooltip_content00029" data-tooltip-anchor="#tooltip_content00029"><span class="kwb kwbu">THOUSAND</span> <span class="kwb kwbu">SONS</span> <span class="kwb kwbu">PSYKER</span></span> unit from your army within range of an <span class="tooltip00035" data-tooltip-content="#tooltip_content00035"><span class="tt kwbu">objective</span> <span class="tt kwbu">marker</span></span> you control.<br><br><span class="str10ColorYour"><b>EFFECT:</b></span> That objective marker remains under your control until your opponent’s Level of Control over that objective marker is greater than yours at the end of a phase.</div>
 <div class="str10Line"></div>
-</div></div><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">INSANE BRAVERY</div>
+</div></details><details id="strat-insane-bravery" class="str-accordion str10ColorYour"><summary><span class="str-acc-name">INSANE BRAVERY</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">Auto-pass Battle-shock test (once per battle)</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">INSANE BRAVERY</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(23%) sepia(88%) saturate(2002%) hue-rotate(179deg) brightness(87%) contrast(93%);" ;="" class="str10Command str10ColorYour"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Core – Epic Deed Stratagem</div>
 <div class="str10Line"></div>
@@ -6663,7 +7023,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorYour"><b>WHEN:</b></span> <span class="tooltip00015" data-tooltip-content="#tooltip_content00015"><span class="tt kwbu">Battle-shock</span></span> step of your <a href="/wh40k10ed/the-rules/core-rules/#COMMAND-PHASE">Command phase</a>, just before you take a <span class="tooltip00015" data-tooltip-content="#tooltip_content00015"><span class="tt kwbu">Battle-shock</span> <span class="tt kwbu">test</span></span> for a unit from your army.<br><br><span class="str10ColorYour"><b>TARGET:</b></span> That unit from your army.<br><br><span class="str10ColorYour"><b>EFFECT:</b></span> Your unit automatically passes that Battle-shock test.<br><br><span class="str10ColorYour"><b>RESTRICTIONS:</b></span> You cannot use this Stratagem more than once per battle.</div>
 <div class="str10Line"></div>
-</div></div><h3 class="str-phase-header">Shooting Phase</h3><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">ARCANE FOCUS</div>
+</div></details><h3 class="str-phase-header">Shooting Phase</h3><details id="strat-arcane-focus" class="str-accordion str10ColorYour"><summary><span class="str-acc-name">ARCANE FOCUS</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">Re-roll psychic test (after Channel the Warp)</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">ARCANE FOCUS</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(23%) sepia(88%) saturate(2002%) hue-rotate(179deg) brightness(87%) contrast(93%);" ;="" class="str10Shooting str10ColorYour"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Grand Coven – Epic Deed Stratagem</div>
 <div class="str10Line"></div>
@@ -6671,7 +7031,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorYour"><b>WHEN:</b></span> Your <a href="/wh40k10ed/the-rules/core-rules/#SHOOTING-PHASE">Shooting phase</a>, just after you take a Psychic test for a <span class="tooltip00001 tooltipstered" data-tooltip-content="#tooltip_content00001" data-tooltip-anchor="#tooltip_content00001"><span class="kwb kwbu">THOUSAND</span> <span class="kwb kwbu">SONS</span></span> model from your army that Channelled the Warp (before resolving that <span class="tooltip00013" data-tooltip-content="#tooltip_content00013"><span class="tt kwbu">Ritual</span></span>).<br><br><span class="str10ColorYour"><b>TARGET:</b></span> That <span class="kwb">THOUSAND</span> <span class="kwb">SONS</span> model.<br><br><span class="str10ColorYour"><b>EFFECT:</b></span> Re-roll all of the D6 rolled for that Psychic test (including the additional D6 for Channelling the Warp).</div>
 <div class="str10Line"></div>
-</div></div><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">DEVASTATING SORCERY</div>
+</div></details><details id="strat-devastating-sorcery" class="str-accordion str10ColorYour"><summary><span class="str-acc-name">DEVASTATING SORCERY</span><span class="str-acc-cp">2CP</span><span class="str-acc-oneliner">+9" range, re-roll hit & wound for psychic weapons</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">DEVASTATING SORCERY</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(23%) sepia(88%) saturate(2002%) hue-rotate(179deg) brightness(87%) contrast(93%);" ;="" class="str10Shooting str10ColorYour"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">2CP</div></div></div></div>
 <div class="str10Type">Grand Coven – Battle Tactic Stratagem</div>
 <div class="str10Line"></div>
@@ -6679,7 +7039,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorYour"><b>WHEN:</b></span> Your <a href="/wh40k10ed/the-rules/core-rules/#SHOOTING-PHASE">Shooting phase</a>.<br><br><span class="str10ColorYour"><b>TARGET:</b></span> One <span class="tooltip00029" data-tooltip-content="#tooltip_content00029" data-tooltip-anchor="#tooltip_content00029"><span class="kwb kwbu">THOUSAND</span> <span class="kwb kwbu">SONS</span> <span class="kwb kwbu">PSYKER</span></span> unit from your army that has not been selected to shoot this phase.<br><br><span class="str10ColorYour"><b>EFFECT:</b></span> Until the end of the phase, add 9" to the Range characteristic of <span class="tooltip00025" data-tooltip-content="#tooltip_content00025"><span class="tt kwbu">Psychic</span> <span class="tt kwbu">weapons</span></span> equipped by models in your unit, and each time a model in your unit makes an attack with a Psychic weapon, you can re-roll the <span class="tooltip00003" data-tooltip-content="#tooltip_content00003"><span class="tt kwbu">Hit</span> <span class="tt kwbu">roll</span></span> and you can re-roll the <span class="tooltip00026" data-tooltip-content="#tooltip_content00026"><span class="tt kwbu">Wound</span> <span class="tt kwbu">roll</span></span>.</div>
 <div class="str10Line"></div>
-</div></div><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">GRENADE</div>
+</div></details><details id="strat-grenade" class="str-accordion str10ColorYour"><summary><span class="str-acc-name">GRENADE</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">6D6, 4+ = 1 MW to enemy within 8"</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">GRENADE</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(23%) sepia(88%) saturate(2002%) hue-rotate(179deg) brightness(87%) contrast(93%);" ;="" class="str10Shooting str10ColorYour"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Core – Wargear Stratagem</div>
 <div class="str10Line"></div>
@@ -6687,7 +7047,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorYour"><b>WHEN:</b></span> Your <a href="/wh40k10ed/the-rules/core-rules/#SHOOTING-PHASE">Shooting phase</a>.<br><br><span class="str10ColorYour"><b>TARGET:</b></span> One <span class="kwb">GRENADES</span> unit from your army (excluding units that Advanced, Fell Back or have shot this turn) that is not within Engagement Range of one or more enemy units.<br><br><span class="str10ColorYour"><b>EFFECT:</b></span> Select one <span class="kwb">GRENADES</span> model in your unit and one enemy unit that is not within Engagement Range of any units from your army and is within 8" of and visible to your <span class="kwb">GRENADES</span> model. Roll six D6: for each 4+, that enemy unit suffers 1 <span class="tooltip00026" data-tooltip-content="#tooltip_content00026"><span class="tt kwbu">mortal</span> <span class="tt kwbu">wound</span></span>.</div>
 <div class="str10Line"></div>
-</div></div><h3 class="str-phase-header">Charge Phase</h3><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">TANK SHOCK</div>
+</div></details><h3 class="str-phase-header">Charge Phase</h3><details id="strat-tank-shock" class="str-accordion str10ColorYour"><summary><span class="str-acc-name">TANK SHOCK</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">Vehicle charge: D6 per T for mortals (max 6)</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorYour"><div class="str10Name">TANK SHOCK</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(23%) sepia(88%) saturate(2002%) hue-rotate(179deg) brightness(87%) contrast(93%);" ;="" class="str10Charge str10ColorYour"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Core – Strategic Ploy Stratagem</div>
 <div class="str10Line"></div>
@@ -6695,7 +7055,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorYour"><b>WHEN:</b></span> Your <a href="/wh40k10ed/the-rules/core-rules/#CHARGE-PHASE">Charge phase</a>, just after a <span class="kwb">VEHICLE</span> unit from your army ends a Charge move.<br><br><span class="str10ColorYour"><b>TARGET:</b></span> That <span class="kwb">VEHICLE</span> unit.<br><br><span class="str10ColorYour"><b>EFFECT:</b></span> Select one enemy unit within <span class="tooltip00019" data-tooltip-content="#tooltip_content00019"><span class="tt kwbu">Engagement</span> <span class="tt kwbu">Range</span></span> of your unit, and select one <span class="kwb">VEHICLE</span> model in your unit that is within <span class="tooltip00019" data-tooltip-content="#tooltip_content00019"><span class="tt kwbu">Engagement</span> <span class="tt kwbu">Range</span></span> of that enemy unit. Roll a number of D6 equal to the Toughness characteristic of the selected <span class="kwb">VEHICLE</span> model. For each 5+, that enemy unit suffers 1 <span class="tooltip00026" data-tooltip-content="#tooltip_content00026"><span class="tt kwbu">mortal</span> <span class="tt kwbu">wound</span></span> (to a maximum of 6 mortal wounds).</div>
 <div class="str10Line"></div>
-</div></div><h3 class="str-phase-header">Fight Phase</h3><div class=" str10Wrap BreakInsideAvoid str10ColorEither"><div class="str10Name">COUNTER-OFFENSIVE</div>
+</div></details><h3 class="str-phase-header">Fight Phase</h3><details id="strat-counter-offensive" class="str-accordion str10ColorEither"><summary><span class="str-acc-name">COUNTER-OFFENSIVE</span><span class="str-acc-cp">2CP</span><span class="str-acc-oneliner">Your unit fights next (after enemy fought)</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorEither"><div class="str10Name">COUNTER-OFFENSIVE</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(40%) sepia(12%) saturate(2210%) hue-rotate(121deg) brightness(94%) contrast(88%);" ;="" class="str10Fight str10ColorEither"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">2CP</div></div></div></div>
 <div class="str10Type">Core – Strategic Ploy Stratagem</div>
 <div class="str10Line"></div>
@@ -6703,7 +7063,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorEither"><b>WHEN:</b></span> <a href="/wh40k10ed/the-rules/core-rules/#FIGHT-PHASE">Fight phase</a>, just after an enemy unit has fought.<br><br><span class="str10ColorEither"><b>TARGET:</b></span> One unit from your army that is within <span class="tooltip00019" data-tooltip-content="#tooltip_content00019"><span class="tt kwbu">Engagement</span> <span class="tt kwbu">Range</span></span> of one or more enemy units and that has not already been selected to fight this phase.<br><br><span class="str10ColorEither"><b>EFFECT:</b></span> Your unit fights next.</div>
 <div class="str10Line"></div>
-</div></div><div class=" str10Wrap BreakInsideAvoid str10ColorEither"><div class="str10Name">EPIC CHALLENGE</div>
+</div></details><details id="strat-epic-challenge" class="str-accordion str10ColorEither"><summary><span class="str-acc-name">EPIC CHALLENGE</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">Character melee gets [PRECISION]</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorEither"><div class="str10Name">EPIC CHALLENGE</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(40%) sepia(12%) saturate(2210%) hue-rotate(121deg) brightness(94%) contrast(88%);" ;="" class="str10Fight str10ColorEither"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Core – Epic Deed Stratagem</div>
 <div class="str10Line"></div>
@@ -6711,7 +7071,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorEither"><b>WHEN:</b></span> <a href="/wh40k10ed/the-rules/core-rules/#FIGHT-PHASE">Fight phase</a>, when a <span class="kwb">CHARACTER</span> unit from your army that is within <span class="tooltip00019" data-tooltip-content="#tooltip_content00019"><span class="tt kwbu">Engagement</span> <span class="tt kwbu">Range</span></span> of one or more <span class="tooltip00010" data-tooltip-content="#tooltip_content00010"><span class="tt kwbu">Attached</span> <span class="tt kwbu">units</span></span> is selected to fight.<br><br><span class="str10ColorEither"><b>TARGET:</b></span> One <span class="kwb">CHARACTER</span> model in your unit.<br><br><span class="str10ColorEither"><b>EFFECT:</b></span> Until the end of the phase, all melee attacks made by that model have the <span class="kwb2 bluefont"><span class="tooltip00036" data-tooltip-content="#tooltip_content00036"><span class="tt kwbu">[PRECISION]</span></span></span> ability.</div>
 <div class="str10Line"></div>
-</div></div><h3 class="str-phase-header">Opponent's Movement Phase</h3><div class=" str10Wrap BreakInsideAvoid str10ColorEnemy"><div class="str10Name">RAPID INGRESS</div>
+</div></details><h3 class="str-phase-header">Opponent's Movement Phase</h3><details id="strat-rapid-ingress" class="str-accordion str10ColorEnemy"><summary><span class="str-acc-name">RAPID INGRESS</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">Arrive from Reserves in opponent's Movement phase</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorEnemy"><div class="str10Name">RAPID INGRESS</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(10%) sepia(76%) saturate(6071%) hue-rotate(352deg) brightness(102%) contrast(99%);" ;="" class="str10Movement str10ColorEnemy"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Core – Strategic Ploy Stratagem</div>
 <div class="str10Line"></div>
@@ -6719,7 +7079,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorEnemy"><b>WHEN:</b></span> End of your opponent's <a href="/wh40k10ed/the-rules/core-rules/#MOVEMENT-PHASE">Movement phase</a>.<br><br><span class="str10ColorEnemy"><b>TARGET:</b></span> One unit from your army that is in <a href="/wh40k10ed/the-rules/core-rules/#2.-Reinforcements">Reserves</a>.<br><br><span class="str10ColorEnemy"><b>EFFECT:</b></span> Your unit can arrive on the battlefield as if it were the <a href="/wh40k10ed/the-rules/core-rules/#2.-Reinforcements">Reinforcements step</a> of your Movement phase, and if every model in that unit has the <span class="tooltip00007" data-tooltip-content="#tooltip_content00007"><span class="tt kwbu">Deep</span> <span class="tt kwbu">Strike</span></span> ability, you can set that unit up as described in the Deep Strike ability (even though it is not your Movement phase).<br><br><span class="str10ColorEnemy"><b>RESTRICTIONS:</b></span> You cannot use this Stratagem to enable a unit to arrive on the battlefield during a <a href="/wh40k10ed/the-rules/core-rules/#The-Battle-Round">battle round</a> it would not normally be able to do so in.</div>
 <div class="str10Line"></div>
-</div></div><h3 class="str-phase-header">Opponent's Movement or Charge Phase</h3><div class=" str10Wrap BreakInsideAvoid str10ColorEnemy"><div class="str10Name">FIRE OVERWATCH</div>
+</div></details><h3 class="str-phase-header">Opponent's Movement or Charge Phase</h3><details id="strat-fire-overwatch" class="str-accordion str10ColorEnemy"><summary><span class="str-acc-name">FIRE OVERWATCH</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">Shoot at moving/charging enemy (6+ to hit)</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorEnemy"><div class="str10Name">FIRE OVERWATCH</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(10%) sepia(76%) saturate(6071%) hue-rotate(352deg) brightness(102%) contrast(99%);" ;="" class="str10Movement str10ColorEnemy"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div style="filter: invert(10%) sepia(76%) saturate(6071%) hue-rotate(352deg) brightness(102%) contrast(99%);" class="str10Charge str10ColorEnemy"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Core – Strategic Ploy Stratagem</div>
 <div class="str10Line"></div>
@@ -6727,7 +7087,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorEnemy"><b>WHEN:</b></span> Your opponent's <a href="/wh40k10ed/the-rules/core-rules/#MOVEMENT-PHASE">Movement</a> or <a href="/wh40k10ed/the-rules/core-rules/#CHARGE-PHASE">Charge phase</a>, just after an enemy unit is set up or when an enemy unit starts or ends a <span class="tooltip00003" data-tooltip-content="#tooltip_content00003"><span class="tt kwbu">Normal</span></span>, <span class="tooltip00004" data-tooltip-content="#tooltip_content00004"><span class="tt kwbu">Advance</span></span> or <span class="tooltip00005" data-tooltip-content="#tooltip_content00005"><span class="tt kwbu">Fall</span> <span class="tt kwbu">Back</span> <span class="tt kwbu">move</span></span>, or <span class="tooltip00011" data-tooltip-content="#tooltip_content00011"><span class="tt kwbu">declares</span> <span class="tt kwbu">a</span> <span class="tt kwbu">charge</span></span>.<br><br><span class="str10ColorEnemy"><b>TARGET:</b></span> One unit from your army that is within 24" of that enemy unit and that would be eligible to shoot if it were your <a href="/wh40k10ed/the-rules/core-rules/#SHOOTING-PHASE">Shooting phase</a>.<br><br><span class="str10ColorEnemy"><b>EFFECT:</b></span> If that enemy <span class="tooltip00012" data-tooltip-content="#tooltip_content00012"><span class="tt kwbu">unit</span> <span class="tt kwbu">is</span> <span class="tt kwbu">visible</span></span> to your unit, your unit can shoot that enemy unit as if it were your Shooting phase.<br><br><span class="str10ColorEnemy"><b>RESTRICTIONS:</b></span> You cannot target a <span class="kwb">TITANIC</span> unit with this Stratagem. Until the end of the phase, each time a model in your unit makes a ranged attack, an unmodified <span class="tooltip00013" data-tooltip-content="#tooltip_content00013"><span class="tt kwbu">Hit</span> <span class="tt kwbu">roll</span></span> of 6 is required to score a hit, irrespective of the attacking weapon's Ballistic Skill or any modifiers. You can only use this Stratagem once per turn.</div>
 <div class="str10Line"></div>
-</div></div><h3 class="str-phase-header">Opponent's Shooting Phase</h3><div class=" str10Wrap BreakInsideAvoid str10ColorEnemy"><div class="str10Name">GO TO GROUND</div>
+</div></details><h3 class="str-phase-header">Opponent's Shooting Phase</h3><details id="strat-go-to-ground" class="str-accordion str10ColorEnemy"><summary><span class="str-acc-name">GO TO GROUND</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">6+ invuln, Benefit of Cover vs incoming fire</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorEnemy"><div class="str10Name">GO TO GROUND</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(10%) sepia(76%) saturate(6071%) hue-rotate(352deg) brightness(102%) contrast(99%);" ;="" class="str10Shooting str10ColorEnemy"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Core – Battle Tactic Stratagem</div>
 <div class="str10Line"></div>
@@ -6735,7 +7095,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorEnemy"><b>WHEN:</b></span> Your opponent's <a href="/wh40k10ed/the-rules/core-rules/#SHOOTING-PHASE">Shooting phase</a>, just after an enemy unit has selected its targets.<br><br><span class="str10ColorEnemy"><b>TARGET:</b></span> One <span class="kwb">INFANTRY</span> unit from your army that was selected as the target of one or more of the attacking unit's attacks.<br><br><span class="str10ColorEnemy"><b>EFFECT:</b></span> Until the end of the phase, all models in your unit have a 6+ <span class="tooltip00035" data-tooltip-content="#tooltip_content00035"><span class="tt kwbu">invulnerable</span> <span class="tt kwbu">save</span></span> and have the <span class="tooltip00037" data-tooltip-content="#tooltip_content00037"><span class="tt kwbu">Benefit</span> <span class="tt kwbu">of</span> <span class="tt kwbu">Cover</span></span>.</div>
 <div class="str10Line"></div>
-</div></div><div class=" str10Wrap BreakInsideAvoid str10ColorEnemy"><div class="str10Name">SMOKESCREEN</div>
+</div></details><details id="strat-smokescreen" class="str-accordion str10ColorEnemy"><summary><span class="str-acc-name">SMOKESCREEN</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">SMOKE unit: Benefit of Cover + Stealth</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorEnemy"><div class="str10Name">SMOKESCREEN</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(10%) sepia(76%) saturate(6071%) hue-rotate(352deg) brightness(102%) contrast(99%);" ;="" class="str10Shooting str10ColorEnemy"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Core – Wargear Stratagem</div>
 <div class="str10Line"></div>
@@ -6743,7 +7103,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorEnemy"><b>WHEN:</b></span> Your opponent's <a href="/wh40k10ed/the-rules/core-rules/#SHOOTING-PHASE">Shooting phase</a>, just after an enemy unit has selected its targets.<br><br><span class="str10ColorEnemy"><b>TARGET:</b></span> One <span class="kwb">SMOKE</span> unit from your army that was selected as the target of one or more of the attacking unit's attacks.<br><br><span class="str10ColorEnemy"><b>EFFECT:</b></span> Until the end of the phase, all models in your unit have the <span class="tooltip00037" data-tooltip-content="#tooltip_content00037"><span class="tt kwbu">Benefit</span> <span class="tt kwbu">of</span> <span class="tt kwbu">Cover</span></span> and the <span class="tooltip00064" data-tooltip-content="#tooltip_content00064"><span class="tt kwbu">Stealth</span></span> ability.</div>
 <div class="str10Line"></div>
-</div></div><h3 class="str-phase-header">Opponent's Charge Phase</h3><div class=" str10Wrap BreakInsideAvoid str10ColorEnemy"><div class="str10Name">HEROIC INTERVENTION</div>
+</div></details><h3 class="str-phase-header">Opponent's Charge Phase</h3><details id="strat-heroic-intervention" class="str-accordion str10ColorEnemy"><summary><span class="str-acc-name">HEROIC INTERVENTION</span><span class="str-acc-cp">1CP</span><span class="str-acc-oneliner">Charge in opponent's Charge phase (within 6")</span></summary><div class=" str10Wrap BreakInsideAvoid str10ColorEnemy"><div class="str10Name">HEROIC INTERVENTION</div>
 <div class="str10Border"><div class="str10DiamondWrap"><div><div class="str10Diamond"><div style="filter: invert(10%) sepia(76%) saturate(6071%) hue-rotate(352deg) brightness(102%) contrast(99%);" ;="" class="str10Charge str10ColorEnemy"></div></div></div><div class="str10Pos2"><div class="str10Diamond"><div class="str10CP">1CP</div></div></div></div>
 <div class="str10Type">Core – Strategic Ploy Stratagem</div>
 <div class="str10Line"></div>
@@ -6751,7 +7111,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
 <div class="str10Line ShowFluff" data-ezoic-video-excluded="1"></div>
 <div class="str10Text"><span class="str10ColorEnemy"><b>WHEN:</b></span> Your opponent's <a href="/wh40k10ed/the-rules/core-rules/#CHARGE-PHASE">Charge phase</a>, just after an enemy unit ends a <span class="tooltip00011" data-tooltip-content="#tooltip_content00011"><span class="tt kwbu">Charge</span> <span class="tt kwbu">move</span></span>.<br><br><span class="str10ColorEnemy"><b>TARGET:</b></span> One unit from your army that is within 6" of that enemy unit and would be eligible to declare a charge against that enemy unit if it were your Charge phase.<br><br><span class="str10ColorEnemy"><b>EFFECT:</b></span> Your unit now declares a charge that targets only that enemy unit, and you resolve that charge as if it were your Charge phase.<br><br><span class="str10ColorEnemy"><b>RESTRICTIONS:</b></span> You can only select a <span class="kwb">VEHICLE</span> unit from your army if it is a <span class="kwb">WALKER</span>. Note that even if this charge is successful, your unit does not receive any <span class="tooltip00041" data-tooltip-content="#tooltip_content00041"><span class="tt kwbu">Charge</span> <span class="tt kwbu">bonus</span></span> this turn.</div>
 <div class="str10Line"></div>
-</div></div></div></div>
+</div></details></div></div>
   </div>
 
   <div id="roster-section-scoring" class="roster-accordion-panel">
@@ -6762,7 +7122,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
       <div style="display: grid; gap: 20px; margin-bottom: 24px;">
         <div style="border: 1px solid rgba(0,0,0,0.3); border-radius: 4px; padding: 14px 18px; background: #fff;">
           <div style="font-weight: 700; margin-bottom: 8px;">Mission Setup (Shared)</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; font-size: 0.95em; align-items: end;">
+          <div class="scoring-mission-grid" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; font-size: 0.95em; align-items: end;">
             <div>
               <label style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Primary Mission</label>
               <select id="scoring-primary" style="width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
@@ -7035,6 +7395,15 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
             <p style="margin: 0 0 6px;"><strong>Extend Battle Lines</strong> — 4VP: objective in your DZ + in No Man's Land. 2VP: objective in No Man's Land only.</p>
             <p style="margin: 0 0 6px;"><strong>Overwhelming Force</strong> — 3VP per enemy unit destroyed that started turn in range of objective (max 5VP).</p>
             <p style="margin: 0 0 0;"><strong>Display of Might</strong> — 4VP: More of your units than opponent's wholly in No Man's Land. (R1 redraw ok)</p>
+          </div>
+        </details>
+
+        <details class="scoring-accordion" style="border: 1px solid rgba(0,0,0,0.2); border-radius: 4px; margin-top: 12px; background: #fafafa;">
+          <summary style="padding: 10px 14px; font-weight: 600; cursor: pointer; list-style: none; color: var(--primary-color);">Challenger Deck</summary>
+          <div style="padding: 12px 14px 16px; border-top: 1px solid rgba(0,0,0,0.1); font-size: 0.9em; line-height: 1.5;">
+            <p style="margin: 0 0 10px;">Draw when you're the Challenger (6+ VP behind at round start). Use Stratagem OR complete Mission. Max 12VP from Challenger.</p>
+            <button type="button" onclick="drawChallengerCard()" style="padding: 8px 16px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">Draw Random Challenger Card</button>
+            <div id="challenger-result" style="display: none; margin-top: 12px; padding: 12px; background: #f0f0f0; border-radius: 4px; font-size: 0.9em; line-height: 1.5;"><div id="challenger-drawn"></div></div>
           </div>
         </details>
 
@@ -7924,9 +8293,9 @@ html {
   .cp-btn:hover { background: rgba(255,255,255,0.25); }
   #cp-counter { min-width: 1.5em; text-align: center; font-variant-numeric: tabular-nums; }
   .Columns2 {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
   .str-phase-header {
     grid-column: 1 / -1;
@@ -7941,8 +8310,21 @@ html {
   }
   .str-phase-header:first-child { margin-top: 0; }
   @media screen and (max-width: 900px) {
-    .Columns2 { grid-template-columns: 1fr; }
+    .Columns2 { gap: 4px; }
   }
+  .str-accordion { margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+  .str-accordion:last-child { border-bottom: none; margin-bottom: 0; }
+  .str-accordion summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; cursor: pointer; list-style: none; font-size: 0.9em; background: rgba(255,255,255,0.03); border-radius: 4px; margin: 0 -4px 4px -4px; }
+  .str-accordion summary::-webkit-details-marker { display: none; }
+  .str-accordion summary::before { content: "▸ "; color: rgba(255,255,255,0.5); font-size: 0.85em; }
+  .str-accordion[open] summary::before { content: "▾ "; }
+  .str-accordion summary:hover { background: rgba(255,255,255,0.06); }
+  .str-acc-name { font-weight: 700; flex-shrink: 0; }
+  .str-accordion.str10ColorEither .str-acc-name { color: #0d9488; }
+  .str-accordion.str10ColorYour .str-acc-name { color: #0284c7; }
+  .str-accordion.str10ColorEnemy .str-acc-name { color: #dc2626; }
+  .str-acc-cp { font-size: 0.8em; opacity: 0.9; flex-shrink: 0; }
+  .str-acc-oneliner { color: rgba(255,255,255,0.75); font-size: 0.9em; flex: 1; min-width: 0; }
   .str10Wrap {
     background: rgb(28, 30, 35);
     border: 1px solid rgba(255, 255, 255, 0.08);
