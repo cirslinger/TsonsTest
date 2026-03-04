@@ -5,18 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Thousand Sons Army Roster - By Unit</title>
 <style>
-/* Mobile-first: Roster Navigator */
+/* Roster Navigator - single row, stretches across */
 .roster-nav {
   position: sticky;
   top: 0;
   z-index: 1000;
   background: linear-gradient(90deg, rgb(20, 21, 25) 0%, rgb(48, 57, 62) 100%);
   color: #fff;
-  padding: 12px;
+  padding: 10px 12px;
   padding-left: max(12px, env(safe-area-inset-left));
   padding-right: max(12px, env(safe-area-inset-right));
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
   gap: 8px;
   border-bottom: 2px solid var(--primary-color, #206173);
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
@@ -25,16 +27,18 @@
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.4);
   color: #fff;
-  padding: 14px 18px;
-  min-height: 48px;
+  padding: 10px 12px;
+  min-height: 44px;
+  flex: 1 1 0;
+  min-width: 0;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 1em;
-  width: 100%;
-  text-align: left;
+  font-size: clamp(0.7rem, 2.5vw, 0.95em);
+  text-align: center;
   transition: background 0.2s;
   -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
 }
 .roster-nav-btn:hover { background: rgba(255,255,255,0.25); }
 .roster-nav-btn.active { background: var(--primary-color, #206173); border-color: var(--primary-color); }
@@ -42,7 +46,8 @@
 .roster-rules-dropdown,
 .roster-stratagems-dropdown {
   position: relative;
-  width: 100%;
+  flex: 1 1 0;
+  min-width: 0;
 }
 .roster-units-dropdown .roster-nav-btn,
 .roster-rules-dropdown .roster-nav-btn,
@@ -53,13 +58,14 @@
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.4);
   color: #fff;
-  padding: 14px 18px;
-  min-height: 48px;
+  padding: 10px 12px;
+  min-height: 44px;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 1em;
+  font-size: clamp(0.7rem, 2.5vw, 0.95em);
   -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
 }
 .roster-units-menu.open,
 .roster-rules-menu.open,
@@ -106,31 +112,22 @@
   100% { box-shadow: none; }
 }
 
-/* Desktop: compact horizontal nav */
+/* Desktop: allow wrap, fixed dropdown width */
 @media (min-width: 640px) {
   .roster-nav {
-    flex-direction: row;
     flex-wrap: wrap;
     gap: 10px;
     padding: 10px 16px;
   }
   .roster-nav-btn {
-    width: auto;
-    min-height: auto;
+    flex: 0 1 auto;
     padding: 10px 16px;
     font-size: 0.95em;
-    text-align: center;
   }
   .roster-units-dropdown,
   .roster-rules-dropdown,
   .roster-stratagems-dropdown {
-    width: auto;
-    display: inline-block;
-  }
-  .roster-units-dropdown .roster-nav-btn,
-  .roster-rules-dropdown .roster-nav-btn,
-  .roster-stratagems-dropdown .roster-nav-btn {
-    width: auto;
+    flex: 0 1 auto;
   }
   .roster-units-menu,
   .roster-rules-menu,
@@ -235,11 +232,41 @@ body { display: flex; flex-direction: column; overflow: hidden; }
   padding-right: max(12px, env(safe-area-inset-right)) !important;
 }
 
-/* Stratagems: larger tap targets on mobile */
+/* Stratagems: larger tap targets + readable text on mobile */
 .str-accordion summary {
   min-height: 48px;
   padding: 14px 16px !important;
   -webkit-tap-highlight-color: transparent;
+}
+@media (max-width: 639px) {
+  #roster-section-stratagems .str-accordion summary { font-size: 1em !important; }
+  #roster-section-stratagems .str-acc-name { font-size: 1em !important; }
+  #roster-section-stratagems .str-acc-oneliner { font-size: 1em !important; }
+  #roster-section-stratagems .str10Name { font-size: 1.35em !important; }
+  #roster-section-stratagems .str10Type { font-size: 0.95em !important; }
+  #roster-section-stratagems .str10Legend { font-size: 1.05em !important; }
+  #roster-section-stratagems .str10Text { font-size: 1.05em !important; line-height: 1.6 !important; }
+  #roster-section-stratagems .str-phase-header { font-size: 1.05em !important; }
+}
+
+/* Scoring: fit viewport, no horizontal scroll */
+#roster-section-scoring {
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+}
+#roster-section-scoring .BreakInsideAvoid {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+#roster-section-scoring iframe {
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+#roster-section-scoring * {
+  box-sizing: border-box;
 }
 
 /* Scoring: stack grid on mobile, larger inputs */
@@ -258,9 +285,15 @@ body { display: flex; flex-direction: column; overflow: hidden; }
   }
   #roster-section-scoring .BreakInsideAvoid {
     padding: 16px !important;
+    width: 100% !important;
+    max-width: 100vw !important;
   }
-  /* Allow horizontal scroll for wide tables on mobile */
-  .roster-accordion-panel {
+  /* Stack player columns on mobile */
+  #roster-section-scoring [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Allow horizontal scroll for wide tables (units section only) */
+  #roster-section-units {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -452,6 +485,11 @@ document.addEventListener('click', function(e) {
 
 document.addEventListener('DOMContentLoaded', function() {
   loadScoringFromStorage();
+  updatePrimarySummary();
+  updateTacticalSummary('p1', 1);
+  updateTacticalSummary('p1', 2);
+  updateTacticalSummary('p2', 1);
+  updateTacticalSummary('p2', 2);
   document.getElementById('roster-section-scoring')?.addEventListener('change', saveScoringToStorage);
   document.getElementById('roster-section-scoring')?.addEventListener('input', saveScoringToStorage);
   var savedTab = null;
@@ -461,8 +499,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Scoring - 10th Edition Mission Decks (Chapter Approved 2025-26)
 const PRIMARY_MISSIONS = ['Linchpin','Burden of Trust','Take and Hold','Terraform','Purge the Foe','Scorched Earth','Unexploded Ordnance','Hidden Supplies','The Ritual','Supply Drop'];
+const PRIMARY_SUMMARIES = {
+  'Linchpin':"R2+: End of Command phase. No home obj: 3VP/obj. With home: 3VP + 5VP/other (max 15VP/turn).",
+  'Burden of Trust':"R2+: Guard objectives. 4VP per obj not in your DZ. Opponent: 2VP per guarding unit at end of your turn.",
+  'Take and Hold':"R2+: End of Command phase. 5VP per objective controlled (max 15VP/turn).",
+  'Terraform':"Action: Terraform objs outside DZ (Shooting). R2+: 4VP/obj (max 12VP). +1VP per terraformed.",
+  'Purge the Foe':"End of round: 4VP if destroyed ≥1 enemy; +4VP if more than friendly. +4VP if control ≥1 obj; +4VP if more than opponent.",
+  'Scorched Earth':"Burn Objective action (R2+). 5VP No Man's Land, 10VP opponent DZ. R2+: 5VP/obj (max 10VP/turn).",
+  'Unexploded Ordnance':"No Man's Land objs = Hazard. Move action: push toward enemy DZ. R2+: 2VP within 12\", 5VP within 6\", 8VP wholly in DZ.",
+  'Hidden Supplies':"Extra obj in No Man's Land. R2+: 5VP if control more; +5VP if 2 outside DZ; +5VP if 1 outside DZ.",
+  'The Ritual':"Action: create obj in No Man's Land. R2+: 5VP per No Man's Land obj (max 15VP/turn).",
+  'Supply Drop':"Alpha & Omega objs. Alpha removed R4, Omega R5. R2+: 5VP R2–3; 8VP R4; 15VP R5 per controlled."
+};
 const DEPLOYMENT = ['Tipping Point','Sweeping Engagement','Search and Destroy','Hammer and Anvil','Dawn of War','Crucible of Battle'];
 const SECONDARY_MISSIONS = ['Behind Enemy Lines','Storm Hostile Objective','Engage on All Fronts','Establish Locus','Cleanse','Assassination','No Prisoners','Cull the Horde','Bring It Down','Defend Stronghold','Marked for Death','Secure No Man\'s Land','Sabotage','Area Denial','Recover Assets','A Tempting Target','Extend Battle Lines','Overwhelming Force','Display of Might'];
+const TACTICAL_SUMMARIES = {
+  'Behind Enemy Lines':"3VP: 1 unit wholly in opponent's DZ. 4VP: 2+ units. (R1 redraw ok)",
+  'Storm Hostile Objective':"4VP: Control obj opponent controlled at start of turn. R2+: 4VP if opponent had none and you took new one. (R1 redraw ok)",
+  'Engage on All Fronts':"Presence = unit in quarter, >6\" from centre. 1VP: 2 quarters. 2VP: 3 quarters. 4VP: 4 quarters.",
+  'Establish Locus':"Action in Shooting. Complete in opponent's DZ or within 6\" of centre. 2VP: centre. 4VP: opponent's DZ.",
+  'Cleanse':"Action: unit on obj outside your DZ. 2VP: 1 cleansed. 4VP: 2+ cleansed.",
+  'Assassination':"5VP per CHARACTER destroyed (Tactical). Fixed: 4VP W4+ CHARACTER, 3VP W<4.",
+  'No Prisoners':"2VP per unit destroyed (max 5VP). Fixed: Bodyguard/non-CHARACTER. Tactical: any unit.",
+  'Cull the Horde':"5VP per enemy INFANTRY unit with Starting Strength 13+ destroyed. Redraw if none.",
+  'Bring It Down':"4VP per MONSTER/VEHICLE destroyed. Fixed: +2VP if 15+ W, +2VP if 20+ W. Redraw if none.",
+  'Defend Stronghold':"3VP: Control ≥1 obj in your DZ at end of opponent's turn. (R1 redraw ok)",
+  'Marked for Death':"Opponent picks 3 Alpha; you pick 1 Gamma. 5VP: destroy Alpha. 2VP: Gamma if no Alpha.",
+  'Secure No Man\'s Land':"2VP: 1 obj in No Man's Land. 5VP: 2+.",
+  'Sabotage':"Action: unit in terrain, not your DZ. 3VP: outside opponent DZ. 6VP: in opponent DZ.",
+  'Area Denial':"2VP: your unit within 3\" of centre, no enemy within 3\". 5VP: no enemy within 6\".",
+  'Recover Assets':"Action: 2+ units in different zones. 3VP: 2 units. 5VP: 3+. Redraw if Incursion or <3 units.",
+  'A Tempting Target':"Opponent picks 1 No Man's Land obj. 5VP if you control it.",
+  'Extend Battle Lines':"4VP: obj in your DZ + No Man's Land. 2VP: No Man's Land only.",
+  'Overwhelming Force':"3VP per enemy unit destroyed that started turn in range of obj (max 5VP).",
+  'Display of Might':"4VP: More of your units than opponent's wholly in No Man's Land. (R1 redraw ok)"
+};
 
 function randomDraw(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function shuffle(arr) {
@@ -502,6 +573,11 @@ function randomizeMissions() {
     p2t1.value = p2drawn[0];
     p2t2.value = p2drawn[1];
   }
+  updatePrimarySummary();
+  updateTacticalSummary('p1', 1);
+  updateTacticalSummary('p1', 2);
+  updateTacticalSummary('p2', 1);
+  updateTacticalSummary('p2', 2);
   saveScoringToStorage();
 }
 
@@ -534,6 +610,7 @@ function discardForCP(player, slot) {
   const cpEl = document.getElementById('cp-counter');
   if (cpEl) cpEl.textContent = Math.max(0, parseInt(cpEl.textContent || 0) + 1);
   drawNewTacticalCard(player, slot);
+  updateTacticalSummary(player, slot);
   saveScoringToStorage();
 }
 
@@ -547,6 +624,22 @@ function updateTacticalUsedDisplay(player) {
   const used = player === 'p1' ? tacticalUsedP1 : tacticalUsedP2;
   const el = document.getElementById(player + '-tact-used');
   if (el) el.textContent = used.length ? 'Used: ' + used.join(', ') : '';
+}
+function updatePrimarySummary() {
+  const sel = document.getElementById('scoring-primary');
+  const el = document.getElementById('primary-summary');
+  if (!el) return;
+  const v = sel?.value || '';
+  el.textContent = v ? (PRIMARY_SUMMARIES[v] || '') : '';
+  el.style.display = v ? 'block' : 'none';
+}
+function updateTacticalSummary(player, slot) {
+  const sel = document.getElementById(player + '-tact-' + slot);
+  const el = document.getElementById(player + '-tact-' + slot + '-summary');
+  if (!el) return;
+  const v = sel?.value || '';
+  el.textContent = v ? (TACTICAL_SUMMARIES[v] || '') : '';
+  el.style.display = v ? 'block' : 'none';
 }
 
 const CHALLENGER_CARDS = [
@@ -7125,7 +7218,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
           <div class="scoring-mission-grid" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; font-size: 0.95em; align-items: end;">
             <div>
               <label style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Primary Mission</label>
-              <select id="scoring-primary" style="width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+              <select id="scoring-primary" onchange="updatePrimarySummary()" style="width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
                 <option value="">— Select —</option>
                 <option value="Linchpin">Linchpin</option>
                 <option value="Burden of Trust">Burden of Trust</option>
@@ -7138,6 +7231,7 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
                 <option value="The Ritual">The Ritual</option>
                 <option value="Supply Drop">Supply Drop</option>
               </select>
+              <div id="primary-summary" style="display: none; margin-top: 6px; padding: 8px 10px; background: #f0f7f9; border-radius: 4px; font-size: 0.9em; line-height: 1.4; color: #333; border-left: 3px solid var(--primary-color);"></div>
             </div>
             <div>
               <label style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Deployment</label>
@@ -7259,10 +7353,11 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
               <button type="button" onclick="clearTacticalUsed('p1')" style="padding: 4px 10px; background: #ccc; color: #333; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">Clear Used</button>
             </div>
             <div style="display: grid; gap: 8px;">
-              <div style="display: flex; gap: 6px; align-items: center;">
-                <select id="p1-tact-1" style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
-                  <option value="">— Select —</option>
-                  <option value="Behind Enemy Lines">Behind Enemy Lines</option>
+              <div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  <select id="p1-tact-1" onchange="updateTacticalSummary('p1',1)" style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <option value="">— Select —</option>
+                    <option value="Behind Enemy Lines">Behind Enemy Lines</option>
                   <option value="Storm Hostile Objective">Storm Hostile Objective</option>
                   <option value="Engage on All Fronts">Engage on All Fronts</option>
                   <option value="Establish Locus">Establish Locus</option>
@@ -7283,9 +7378,12 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
                   <option value="Display of Might">Display of Might</option>
                 </select>
                 <button type="button" onclick="discardForCP('p1',1)" title="Discard for +1 CP" style="padding: 4px 8px; background: #888; color: #fff; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">Discard +1CP</button>
+                </div>
+                <div id="p1-tact-1-summary" style="display: none; margin-top: 6px; padding: 8px 10px; background: #f0f7f9; border-radius: 4px; font-size: 0.9em; line-height: 1.4; color: #333; border-left: 3px solid var(--primary-color);"></div>
               </div>
-              <div style="display: flex; gap: 6px; align-items: center;">
-                <select id="p1-tact-2" style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+              <div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                <select id="p1-tact-2" onchange="updateTacticalSummary('p1',2)" style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
                   <option value="">— Select —</option>
                   <option value="Behind Enemy Lines">Behind Enemy Lines</option>
                   <option value="Storm Hostile Objective">Storm Hostile Objective</option>
@@ -7308,6 +7406,8 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
                   <option value="Display of Might">Display of Might</option>
                 </select>
                 <button type="button" onclick="discardForCP('p1',2)" title="Discard for +1 CP" style="padding: 4px 8px; background: #888; color: #fff; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">Discard +1CP</button>
+                </div>
+                <div id="p1-tact-2-summary" style="display: none; margin-top: 6px; padding: 8px 10px; background: #f0f7f9; border-radius: 4px; font-size: 0.9em; line-height: 1.4; color: #333; border-left: 3px solid var(--primary-color);"></div>
               </div>
             </div>
           </div>
@@ -7319,8 +7419,9 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
               <button type="button" onclick="clearTacticalUsed('p2')" style="padding: 4px 10px; background: #ccc; color: #333; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">Clear Used</button>
             </div>
             <div style="display: grid; gap: 8px;">
-              <div style="display: flex; gap: 6px; align-items: center;">
-                <select id="p2-tact-1" style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+              <div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                <select id="p2-tact-1" onchange="updateTacticalSummary('p2',1)" style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
                   <option value="">— Select —</option>
                   <option value="Behind Enemy Lines">Behind Enemy Lines</option>
                   <option value="Storm Hostile Objective">Storm Hostile Objective</option>
@@ -7343,9 +7444,12 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
                   <option value="Display of Might">Display of Might</option>
                 </select>
                 <button type="button" onclick="discardForCP('p2',1)" title="Discard for +1 CP" style="padding: 4px 8px; background: #888; color: #fff; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">Discard +1CP</button>
+                </div>
+                <div id="p2-tact-1-summary" style="display: none; margin-top: 6px; padding: 8px 10px; background: #f0f7f9; border-radius: 4px; font-size: 0.9em; line-height: 1.4; color: #333; border-left: 3px solid var(--primary-color);"></div>
               </div>
-              <div style="display: flex; gap: 6px; align-items: center;">
-                <select id="p2-tact-2" style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+              <div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                <select id="p2-tact-2" onchange="updateTacticalSummary('p2',2)" style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
                   <option value="">— Select —</option>
                   <option value="Behind Enemy Lines">Behind Enemy Lines</option>
                   <option value="Storm Hostile Objective">Storm Hostile Objective</option>
@@ -7368,6 +7472,8 @@ If a model is equipped with one or more Pistols, unless it is a <strong><span st
                   <option value="Display of Might">Display of Might</option>
                 </select>
                 <button type="button" onclick="discardForCP('p2',2)" title="Discard for +1 CP" style="padding: 4px 8px; background: #888; color: #fff; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">Discard +1CP</button>
+                </div>
+                <div id="p2-tact-2-summary" style="display: none; margin-top: 6px; padding: 8px 10px; background: #f0f7f9; border-radius: 4px; font-size: 0.9em; line-height: 1.4; color: #333; border-left: 3px solid var(--primary-color);"></div>
               </div>
             </div>
           </div>
